@@ -1,0 +1,8 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+GET     /                           controllers.Application.index
+GET     /wps/demo                   controllers.WPS.demo
+GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET     /wps                        controllers.WPS.execute( version: String ?= "1.0.0", request: String, identifier: String ?= "", responseform: String ?= "", storeexecuteresponse: Boolean ?= true, status: Boolean ?= true, datainputs: String ?= "" )

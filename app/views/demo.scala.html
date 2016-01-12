@@ -1,0 +1,17 @@
+@main("WPS demo") {
+
+    <h2> CDAS WPS demo </h2>
+    <hr>
+    <h3> Get Capabilities: </h3>
+    <p CLASS="indented"> <h3><a href="http://localhost:9000/wps?version=2.0;request=getcapabilities">
+    <code> http://localhost:9000/wps?version=2.0;request=GetCapabilities </code> </a> </h3></p>
+    <hr>
+    <h3> Describe Process: </h3>
+    <p CLASS="indented"><h3> <a href="http://localhost:9000/wps?version=2.0;request=describeprocess;identifier=sum">
+    <code> http://localhost:9000/wps?version=2.0;request=DescribeProcess;identifier=Sum </code> </a> </h3>
+    <hr>
+    <h3> Execute: </h3>
+    <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?version=1.0.0&request=Execute&identifier=CWT.average&datainputs=[domain={"id":"d0","level":{"start":0,"end":1,"system":"indices"}},variable={"dset":"MERRA/mon/atmos","id":"v0:hur","domain":"d0"},operation="CWT.average(v0,axis:xy)"]'>
+    <code>   http://localhost:9000/wps?version=1.0.0&request=Execute&identifier=CWT.average&datainputs=[domain={"id":"d0","level":{"start":0,"end":1,"system":"indices"}},variable={"dset":"MERRA/mon/atmos","id":"v0:hur","domain":"d0"},operation="CWT.average(v0,axis:xy)"] </code> </a> </h3>
+    <hr>
+}
