@@ -75,3 +75,21 @@ object testRun extends App {
   }
 }
 
+/*
+import org.scalatest.FunSuite
+
+class ParserTest extends FunSuite {
+
+  test("DescribeProcess") {
+    println(webProcessManager.listProcesses())
+    val process = webProcessManager.describeProcess("CWT.Sum")
+    process match {
+      case Some(p) => println(p)
+      case None => println("Unrecognized process")
+    }
+    assert(true)
+  }
+
+}
+*/
+

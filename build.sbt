@@ -13,6 +13,12 @@ libraryDependencies ++= Seq(
   cache,
   ws,
   specs2 % Test
+//  "org.scala-lang.modules" %% "scala-xml" % "1.0.3",
+//  "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3"
+)
+
+val appDependencies = Seq(
+  "org.scalatestplus" % "play_2.10" % "1.0.0" % "test"
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
