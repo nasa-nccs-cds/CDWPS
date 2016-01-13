@@ -9,12 +9,12 @@ class OperationNotationParser extends JavaTokenParsers {
   def name: Parser[String] = """[a-zA-Z0-9_.]*""".r
   def fname: Parser[(String, String)] = (
     name ~ ":" ~ name ^^ { case x ~ ":" ~ y => (y, x) }
-    | name ^^ (y => (y, ""))
-  )
+      | name ^^ (y => (y, ""))
+    )
   def function: Parser[((String, String), List[String])] = (
     fname ~ arglist ^^ { case x ~ y => (x, y) }
-    | arglist ^^ { y => (("", ""), y) }
-  )
+      | arglist ^^ { y => (("", ""), y) }
+    )
   def flist: Parser[Any] = repsep(function, ",")
 }
 
@@ -34,11 +34,11 @@ class ObjectNotationParser extends JavaTokenParsers {
   def key: Parser[String] = """[a-zA-Z_]\w*""".r
   def value: Parser[Any] = (
     stringLiteral
-    | obj
-    | floatingPointNumber ^^ (_.toFloat)
-    | "true" ^^ (x => true)
-    | "false" ^^ (x => false)
-  )
+      | obj
+      | floatingPointNumber ^^ (_.toFloat)
+      | "true" ^^ (x => true)
+      | "false" ^^ (x => false)
+    )
   def member: Parser[(String, Any)] = stringLiteral ~ ":" ~ value ^^ { case x ~ ":" ~ y => (x, y) }
   def obj: Parser[Map[String, Any]] = "{" ~> repsep(member, ",") <~ "}" ^^ (Map() ++ _)
 }

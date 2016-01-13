@@ -47,11 +47,11 @@ class ProcessManager(process_list: List[Process]) {
 
   def listProcesses() = <processes> { processMap.values.map(_.toXmlHeader) } </processes>
 
-  def executeProcess(process_name: String, datainputs: collection.immutable.Map[String, Any], runargs: collection.immutable.Map[String, Any]) = {
+  def executeProcess(process_name: String, datainputs: collection.immutable.Map[String, Any ], runargs: collection.immutable.Map[String, Any]) = {
     import nccs.process.TaskRequest
     processMap.get(process_name.toLowerCase) match {
       case Some(p) =>
-        val tr = TaskRequest.create(process_name, datainputs)
+        val tr = TaskRequest(process_name, datainputs)
         Some(tr)
       case None =>
         None
