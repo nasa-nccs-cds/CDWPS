@@ -25,23 +25,23 @@ class WPS extends Controller {
     storeexecuteresponse: Boolean,
     status: Boolean,
     datainputs: String) = Action {
-      request.toLowerCase match {
-        case "getcapabilities" =>
-          Ok(webProcessManager.listProcesses)
-        case "describeprocess" =>
-          webProcessManager.describeProcess(identifier) match {
-            case Some(p) => Ok(p)
-            case None => NotFound("Unrecognized process")
-          }
-        case "execute" =>
-          val runargs = Map[String, Any]("responseform" -> responseform, "storeexecuteresponse" -> storeexecuteresponse, "status" -> status)
-          val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
-          val result = webProcessManager.executeProcess(identifier, parsed_data_inputs, runargs)
-          result match {
-            case Some(p) => Ok(p.toString)
-            case None => NotFound("Unrecognized process")
-          }
-      }
+    request.toLowerCase match {
+      case "getcapabilities" =>
+        Ok(webProcessManager.listProcesses)
+      case "describeprocess" =>
+        webProcessManager.describeProcess(identifier) match {
+          case Some(p) => Ok(p)
+          case None => NotFound("Unrecognized process")
+        }
+      case "execute" =>
+        val runargs = Map[String, Any]("responseform" -> responseform, "storeexecuteresponse" -> storeexecuteresponse, "status" -> status)
+        val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
+        val result = webProcessManager.executeProcess(identifier, parsed_data_inputs, runargs)
+        result match {
+          case Some(p) => Ok(p.toString)
+          case None => NotFound("Unrecognized process")
+        }
     }
   }
+}
 
