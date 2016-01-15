@@ -2,8 +2,9 @@ package utilities
 import scala.util.parsing.combinator._
 
 class ObjectNotationParser extends JavaTokenParsers {
+  def normalize(sval: String): String = sval.stripPrefix("\"").stripSuffix("\"").toLowerCase
   def expr: Parser[Map[String, Seq[Map[String, Any]]]] = "[" ~> repsep(decl, ",") <~ "]" ^^ (Map() ++ _)
-  def decl: Parser[(String, Seq[Map[String, Any]])] = key ~ "=" ~ objlist ^^ { case arg0 ~ "=" ~ arg1 => (arg0 -> arg1) }
+  def decl: Parser[(String, Seq[Map[String, Any]])] = key ~ "=" ~ objlist ^^ { case arg0 ~ "=" ~ arg1 => (normalize(arg0) -> arg1) }
   def key: Parser[String] = """[a-zA-Z_]\w*""".r
   def value: Parser[Any] = (
     stringLiteral
@@ -12,7 +13,7 @@ class ObjectNotationParser extends JavaTokenParsers {
     | "true" ^^ (x => true)
     | "false" ^^ (x => false)
   )
-  def member: Parser[(String, Any)] = stringLiteral ~ ":" ~ value ^^ { case x ~ ":" ~ y => (x, y) }
+  def member: Parser[(String, Any)] = stringLiteral ~ ":" ~ value ^^ { case x ~ ":" ~ y => (normalize(x), y) }
   def omap: Parser[Map[String, Any]] = "{" ~> repsep(member, ",") <~ "}" ^^ (Map() ++ _)
   def obj: Parser[Map[String, Any]] = omap | unparsed
   def unparsed: Parser[Map[String, Any]] = stringLiteral ^^ { case x: Any => Map[String, Any](("unparsed" -> x)) }

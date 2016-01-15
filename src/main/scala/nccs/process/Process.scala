@@ -1,4 +1,7 @@
 package nccs.process
+
+import nccs.engine.ExecutionManager
+
 import scala.collection.mutable.Map
 
 import scala.xml._
@@ -52,12 +55,18 @@ class ProcessManager(process_list: List[Process]) {
     import nccs.engine.ExecutionManager
     processMap.get(process_name.toLowerCase) match {
       case Some(p) =>
-        val tr = TaskRequest(process_name, datainputs)
-        ExecutionManager.execute( tr, runargs )
+        val tr = TaskRequest( process_name, datainputs )
+        if( validateProcesses( tr ) ) {
+          ExecutionManager.execute( tr, runargs )
+        }
         Some(tr)
       case None =>
         None
     }
+  }
+
+  def validateProcesses( tr: TaskRequest ): Boolean = {
+    true
   }
 }
 
@@ -68,7 +77,7 @@ object webProcessManager extends ProcessManager(
   )
 )
 
-object testRun extends App {
+object testProcessManager extends App {
   println(webProcessManager.listProcesses())
   val process = webProcessManager.describeProcess("CWT.Sum")
   process match {
