@@ -67,6 +67,11 @@ class ContainerBase {
   val logger = LoggerFactory.getLogger( classOf[ContainerBase] )
   def item_key(map_item: (String, Any)): String = map_item._1
 
+  def getStringKeyMap( generic_map: Map[_,_] ): Map[String,Any] = {
+    assert( generic_map.isEmpty | generic_map.keys.head.isInstanceOf[ String ] )
+    generic_map.asInstanceOf[ Map[String,Any] ]
+  }
+
   def key_equals(key_value: String)(map_item: (String, Any)): Boolean = {
     item_key(map_item) == key_value
   }
@@ -163,7 +168,8 @@ class DomainContainer( val id: String, val axes: List[DomainAxis] ) extends Cont
 object DomainAxis extends ContainerBase {
   def apply( id: String, axis_spec: Any ): Option[DomainAxis] = {
     axis_spec match {
-      case axis_map: Map[String,Any] =>
+      case generic_axis_map: Map[_,_] if !generic_axis_map.isEmpty =>
+        val axis_map = getStringKeyMap( generic_axis_map )
         val start = getFloatValue( axis_map.get("start") )
         val end = getFloatValue( axis_map.get("end") )
         val system = getStringValue( axis_map.get("system") )
@@ -171,7 +177,7 @@ object DomainAxis extends ContainerBase {
         Some( new DomainAxis( id, start, end, system, bounds ) )
       case None => None
       case _ =>
-        logger.error("Unrecognized DomainAxis type: " + axis_spec.getClass.toString )
+        logger.error("Unrecognized DomainAxis spec: " + axis_spec.getClass.toString )
         None
     }
   }

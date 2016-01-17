@@ -2,9 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="09b660f7-097e-4db7-89d1-6ab823ea950b" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/conf/logback.xml" afterPath="$PROJECT_DIR$/conf/logback.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/scala/nccs/engine/Spark.scala" afterPath="$PROJECT_DIR$/src/main/scala/nccs/engine/Spark.scala" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/scala/nccs/process/Task.scala" afterPath="$PROJECT_DIR$/src/main/scala/nccs/process/Task.scala" />
     </list>
     <ignored path="cdas.iws" />
@@ -112,11 +109,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Task.scala" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Task.scala" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/scala/nccs/process/Task.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="22" column="29" selection-start-line="22" selection-start-column="29" selection-end-line="22" selection-end-column="29" />
+            <state vertical-scroll-proportion="-2.695122">
+              <caret line="70" column="80" selection-start-line="70" selection-start-column="80" selection-end-line="70" selection-end-column="80" />
               <folding>
                 <element signature="e#22#54#0" expanded="true" />
               </folding>
@@ -170,10 +167,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Spark.scala" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Spark.scala" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/scala/nccs/engine/Spark.scala">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.34756097">
+            <state vertical-scroll-proportion="0.0">
               <caret line="19" column="101" selection-start-line="19" selection-start-column="101" selection-end-line="19" selection-end-column="101" />
               <folding>
                 <element signature="e#20#51#0" expanded="true" />
@@ -215,8 +212,8 @@
         <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/src/main/scala/nccs/process/Process.scala" />
         <option value="$PROJECT_DIR$/src/main/scala/nccs/engine/Spark.scala" />
-        <option value="$PROJECT_DIR$/src/main/scala/nccs/process/Task.scala" />
         <option value="$PROJECT_DIR$/conf/logback.xml" />
+        <option value="$PROJECT_DIR$/src/main/scala/nccs/process/Task.scala" />
       </list>
     </option>
   </component>
@@ -923,7 +920,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="scala-line">
           <url>file://$PROJECT_DIR$/src/main/scala/nccs/process/Task.scala</url>
-          <line>95</line>
+          <line>100</line>
           <properties />
           <option name="timeStamp" value="1" />
         </line-breakpoint>
@@ -1364,22 +1361,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/nccs/process/Task.scala">
+    <entry file="file://$PROJECT_DIR$/src/main/scala/nccs/engine/Spark.scala">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
-          <caret line="22" column="29" selection-start-line="22" selection-start-column="29" selection-end-line="22" selection-end-column="29" />
+          <caret line="19" column="101" selection-start-line="19" selection-start-column="101" selection-end-line="19" selection-end-column="101" />
           <folding>
-            <element signature="e#22#54#0" expanded="true" />
+            <element signature="e#20#51#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/scala/nccs/engine/Spark.scala">
+    <entry file="file://$PROJECT_DIR$/src/main/scala/nccs/process/Task.scala">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.34756097">
-          <caret line="19" column="101" selection-start-line="19" selection-start-column="101" selection-end-line="19" selection-end-column="101" />
+        <state vertical-scroll-proportion="-2.695122">
+          <caret line="70" column="80" selection-start-line="70" selection-start-column="80" selection-end-line="70" selection-end-column="80" />
           <folding>
-            <element signature="e#20#51#0" expanded="true" />
+            <element signature="e#22#54#0" expanded="true" />
           </folding>
         </state>
       </provider>
