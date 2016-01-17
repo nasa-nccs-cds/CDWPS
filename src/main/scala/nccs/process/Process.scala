@@ -1,9 +1,7 @@
 package nccs.process
-
 import nccs.engine.ExecutionManager
-
-import scala.collection.mutable.Map
-
+import scala.collection.mutable
+import scala.collection.immutable
 import scala.xml._
 
 class ProcessInput(val name: String, val itype: String, val maxoccurs: Int, val minoccurs: Int) {
@@ -50,7 +48,7 @@ class ProcessManager(process_list: List[Process]) {
 
   def listProcesses() = <processes> { processMap.values.map(_.toXmlHeader) } </processes>
 
-  def executeProcess(process_name: String, datainputs: scala.collection.immutable.Map[String, Seq[scala.collection.immutable.Map[String, Any]] ], runargs: collection.immutable.Map[String, Any]) = {
+  def executeProcess(process_name: String, datainputs: Map[String, Seq[ Map[String, Any]] ], runargs: Map[String, Any]) = {
     import nccs.process.TaskRequest
     import nccs.engine.ExecutionManager
     processMap.get(process_name.toLowerCase) match {

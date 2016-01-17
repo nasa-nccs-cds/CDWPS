@@ -2,7 +2,10 @@ package nccs.process
 
 import play.api.Logger
 import scala.util.matching.Regex
+import scala.collection.mutable
+import scala.collection.immutable
 import scala.xml._
+import mutable.ListBuffer
 
 case class ErrorReport(severity: String, message: String) {
   override def toString() = {
@@ -15,10 +18,7 @@ case class ErrorReport(severity: String, message: String) {
 }
 
 class TaskRequest(val name: String, val data: List[DataContainer], domain: List[DomainContainer], val operation: List[WorkflowContainer]) {
-
-  import scala.collection.mutable.ListBuffer
-
-  val errorReports = ListBuffer[ErrorReport]()
+  val errorReports = new ListBuffer[ErrorReport]()
   val logger: Logger = Logger(this.getClass())
 
   def addErrorReport(severity: String, message: String) = {
@@ -54,7 +54,7 @@ class TaskRequest(val name: String, val data: List[DataContainer], domain: List[
 }
 
 object TaskRequest {
-  def apply(process_name: String, datainputs: collection.immutable.Map[String, Seq[collection.immutable.Map[String, Any]]]) = {
+  def apply(process_name: String, datainputs: Map[String, Seq[Map[String, Any]]]) = {
     val data_list = datainputs.getOrElse("variable", List()).map(DataContainer(_)).flatten.toList
     val domain_list = datainputs.getOrElse("domain", List()).map(DomainContainer(_)).flatten.toList
     val operation_list = datainputs.getOrElse("operation", List()).map(WorkflowContainer(_)).flatten.toList
@@ -159,7 +159,7 @@ class DomainContainer( val id: String, val axes: List[DomainAxis] ) extends Cont
 object DomainAxis extends ContainerBase {
   def apply( id: String, axis_spec: Any ): Option[DomainAxis] = {
     axis_spec match {
-      case axis_map: Map[String, Any] =>
+      case axis_map: Map[String,Any] =>
         val start = getFloatValue( axis_map.get("start") )
         val end = getFloatValue( axis_map.get("end") )
         val system = getStringValue( axis_map.get("system") )
@@ -186,7 +186,7 @@ class DomainAxis( val d_id: String, val d_start: Float, val d_end: Float, val d_
 
 object DomainContainer extends ContainerBase {
   def apply(metadata: Map[String, Any]): Option[DomainContainer] = {
-    var items = new scala.collection.mutable.ListBuffer[Option[DomainAxis]]()
+    var items = new ListBuffer[Option[DomainAxis]]()
     try {
       val id = filterMap(metadata, key_equals("id"))
       items += DomainAxis("lat", filterMap(metadata, key_equals( """lat*""".r)))
