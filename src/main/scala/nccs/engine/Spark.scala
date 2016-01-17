@@ -5,7 +5,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 object SparkEngine {
-  val logger = LoggerFactory.getLogger("wps") // classOf[ContainerBase])
+  val logger = LoggerFactory.getLogger( classOf[SparkContext] )
 
   lazy val conf = {
     new SparkConf(false)

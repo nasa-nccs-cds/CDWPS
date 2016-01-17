@@ -20,7 +20,7 @@ case class ErrorReport(severity: String, message: String) {
 
 class TaskRequest(val name: String, val data: List[DataContainer], domain: List[DomainContainer], val operation: List[WorkflowContainer]) {
   val errorReports = new ListBuffer[ErrorReport]()
-  val logger = LoggerFactory.getLogger("wps") // classOf[ContainerBase])
+  val logger = LoggerFactory.getLogger( classOf[TaskRequest] )
 
   def addErrorReport(severity: String, message: String) = {
     val error_rep = ErrorReport(severity, message)
@@ -64,7 +64,7 @@ object TaskRequest {
 }
 
 class ContainerBase {
-  val logger = LoggerFactory.getLogger("wps") // classOf[ContainerBase])
+  val logger = LoggerFactory.getLogger( classOf[ContainerBase] )
   def item_key(map_item: (String, Any)): String = map_item._1
 
   def key_equals(key_value: String)(map_item: (String, Any)): Boolean = {
