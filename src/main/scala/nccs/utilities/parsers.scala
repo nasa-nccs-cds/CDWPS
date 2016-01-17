@@ -4,7 +4,7 @@ import scala.util.parsing.combinator._
 
 class OperationNotationParser extends JavaTokenParsers {
   var key_index = 0
-  def new_key: String = { key_index += 1; "_ivar#" + key_index }
+  def new_key: String = { key_index += 1; "ivar#" + key_index }
   def expr: Parser[Map[String, Any]] = repsep(function, ",") ^^ (Map() ++ _)
   def arglist: Parser[List[String]] = "(" ~> repsep(value, ",") <~ ")"
   def value: Parser[String] = """[a-zA-Z0-9_:.*]*""".r
@@ -15,7 +15,7 @@ class OperationNotationParser extends JavaTokenParsers {
     )
   def function: Parser[(String, List[String])] = (
     fname ~ arglist ^^ { case x ~ y => (x, y) }
-      | arglist ^^ { y => ("~" + new_key, y) }
+      | arglist ^^ { y => (new_key, y) }
     )
 }
 

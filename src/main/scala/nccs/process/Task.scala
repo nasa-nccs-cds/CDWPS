@@ -40,9 +40,9 @@ class TaskRequest(val name: String, val data: List[DataContainer], domain: List[
       <data>
         {data.map(_.toXml())}
       </data>
-      <domain>
+      <domains>
         {domain.map(_.toXml())}
-      </domain>
+      </domains>
       <operation>
         {operation.map(_.toXml())}
       </operation>

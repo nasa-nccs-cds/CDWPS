@@ -39,7 +39,9 @@ class WPS extends Controller {
         val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
         val result = webProcessManager.executeProcess(identifier, parsed_data_inputs, runargs)
         result match {
-          case Some(p) => Ok(p.toXml)
+          case Some(p) =>
+            val response = p.toXml
+            Ok(response)
           case None => NotFound("Unrecognized process")
         }
     }
