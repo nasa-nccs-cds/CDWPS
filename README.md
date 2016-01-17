@@ -33,3 +33,10 @@ _Climate Data Analytic Services WPS application built on scala, play, Spark, Akk
     2) Import cdas project
     
 
+####  Project Configuration:
+
+    1) Logging: Edit conf/logback.xml
+    
+
+    
+

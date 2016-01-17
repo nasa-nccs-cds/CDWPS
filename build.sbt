@@ -13,7 +13,6 @@ libraryDependencies ++= Seq( cache, ws, specs2 % Test )
 libraryDependencies ++= Dependencies.sparkAkkaHadoop
 dependencyOverrides ++= Set( "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4" )
 val appDependencies = Seq( "org.scalatestplus" % "play_2.10" % "1.0.0" % "test" )
-
 releaseSettings
 scalariformSettings
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }

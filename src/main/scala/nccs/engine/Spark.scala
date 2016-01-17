@@ -1,9 +1,11 @@
 package nccs.engine
 import nccs.process.TaskRequest
 import org.apache.spark.{SparkContext, SparkConf}
-import play.api.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 object SparkEngine {
+  val logger = LoggerFactory.getLogger("wps") // classOf[ContainerBase])
 
   lazy val conf = {
     new SparkConf(false)
@@ -15,6 +17,6 @@ object SparkEngine {
   lazy val sc = SparkContext.getOrCreate(conf)
 
   def execute( request: TaskRequest, run_args: Map[String,Any] ) = {
-    Logger.debug("Execute { request: " + request.toString + ", runargs: " + run_args.toString + "}"  )
+    logger.info("Execute { request: " + request.toString + ", runargs: " + run_args.toString + "}"  )
   }
 }

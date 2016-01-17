@@ -1,11 +1,12 @@
 package nccs.process
 
-import play.api.Logger
 import scala.util.matching.Regex
 import scala.collection.mutable
 import scala.collection.immutable
 import scala.xml._
 import mutable.ListBuffer
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 case class ErrorReport(severity: String, message: String) {
   override def toString() = {
@@ -19,11 +20,11 @@ case class ErrorReport(severity: String, message: String) {
 
 class TaskRequest(val name: String, val data: List[DataContainer], domain: List[DomainContainer], val operation: List[WorkflowContainer]) {
   val errorReports = new ListBuffer[ErrorReport]()
-  val logger: Logger = Logger(this.getClass())
+  val logger = LoggerFactory.getLogger("wps") // classOf[ContainerBase])
 
   def addErrorReport(severity: String, message: String) = {
     val error_rep = ErrorReport(severity, message)
-    Logger.info(error_rep.toString)
+    logger.error(error_rep.toString)
     errorReports += error_rep
   }
 
@@ -63,6 +64,7 @@ object TaskRequest {
 }
 
 class ContainerBase {
+  val logger = LoggerFactory.getLogger("wps") // classOf[ContainerBase])
   def item_key(map_item: (String, Any)): String = map_item._1
 
   def key_equals(key_value: String)(map_item: (String, Any)): Boolean = {
@@ -134,11 +136,13 @@ object DataContainer extends ContainerBase {
       val dset = filterMap(metadata, key_equals("dset"))
       val id = filterMap(metadata, key_equals("id"))
       val domain = filterMap(metadata, key_equals("domain"))
+      logger.info(s"Creating DataContainer { id = $id, dset = $dset, domain = $domain }"  )
+
       Some(new DataContainer(id.toString, dset, domain))
     } catch {
       case e: Exception => {
-        Logger.error("Error creating DataContainer: " + e.toString  )
-        Logger.error( e.getStackTrace.mkString("\n") )
+        logger.error("Error creating DataContainer: " + e.toString  )
+        logger.error( e.getStackTrace.mkString("\n") )
         None
       }
     }
@@ -167,7 +171,7 @@ object DomainAxis extends ContainerBase {
         Some( new DomainAxis( id, start, end, system, bounds ) )
       case None => None
       case _ =>
-        Logger.error("Unrecognized DomainAxis type: " + axis_spec.getClass.toString )
+        logger.error("Unrecognized DomainAxis type: " + axis_spec.getClass.toString )
         None
     }
   }
@@ -196,8 +200,8 @@ object DomainContainer extends ContainerBase {
       Some( new DomainContainer( id.toString, items.flatten.toList ) )
     } catch {
       case e: Exception => {
-        Logger.error("Error creating DomainContainer: " + e.toString)
-        Logger.error( e.getStackTrace.mkString("\n") )
+        logger.error("Error creating DomainContainer: " + e.toString)
+        logger.error( e.getStackTrace.mkString("\n") )
         None
       }
     }
@@ -221,7 +225,7 @@ object WorkflowContainer extends ContainerBase {
       Some(new WorkflowContainer(parsed_data_inputs.flatMap(OperationContainer(_))))
     } catch {
       case e: Exception => {
-        Logger.error("Error creating WorkflowContainer: " + e.toString)
+        logger.error("Error creating WorkflowContainer: " + e.toString)
         None
       }
     }
@@ -243,7 +247,7 @@ object OperationContainer extends ContainerBase {
       case ((result_id: String, id: String), args: Iterable[Any]) => Some(new OperationContainer(result_id, id, args))
       case (id: String, args: Iterable[Any]) => Some(new OperationContainer(id = id, args = args))
       case _ => {
-        Logger.error("Unrecognized format for OperationContainer: " + raw_metadata.toString)
+        logger.error("Unrecognized format for OperationContainer: " + raw_metadata.toString)
         None
       }
     }

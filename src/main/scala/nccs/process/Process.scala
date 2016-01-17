@@ -1,8 +1,12 @@
 package nccs.process
+
+
 import nccs.engine.ExecutionManager
 import scala.collection.mutable
 import scala.collection.immutable
 import scala.xml._
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ProcessInput(val name: String, val itype: String, val maxoccurs: Int, val minoccurs: Int) {
 
@@ -41,6 +45,12 @@ class ProcessList(val process_list: List[Process]) {
 class ProcessManager(process_list: List[Process]) {
   private val processMap: Map[String, Process] = Map[String, Process](process_list.map(p => (p.name.toLowerCase -> p)): _*)
 
+  def printLoggerInfo(): Unit = {
+    import ch.qos.logback.classic.LoggerContext
+    import ch.qos.logback.core.util.StatusPrinter
+    StatusPrinter.print((LoggerFactory.getILoggerFactory).asInstanceOf[LoggerContext])
+  }
+
   def describeProcess(name: String) = processMap.get(name.toLowerCase) match {
     case Some(p) => Some(p.toXml)
     case None => None
@@ -66,6 +76,7 @@ class ProcessManager(process_list: List[Process]) {
   def validateProcesses( tr: TaskRequest ): Boolean = {
     true
   }
+
 }
 
 object webProcessManager extends ProcessManager(

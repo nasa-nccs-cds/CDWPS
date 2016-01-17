@@ -1,6 +1,5 @@
 package nccs.engine
 import nccs.process.TaskRequest
-import play.api.Logger
 
 class ExecutionManager {}
 
