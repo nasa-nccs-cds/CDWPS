@@ -1,5 +1,7 @@
-package utilities
+package utilities.parsers
 import scala.util.parsing.combinator._
+
+class BadRequestException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
 class ObjectNotationParser extends JavaTokenParsers {
   def normalize(sval: String): String = sval.stripPrefix("\"").stripSuffix("\"").toLowerCase
@@ -21,7 +23,14 @@ class ObjectNotationParser extends JavaTokenParsers {
 }
 
 object wpsObjectParser extends ObjectNotationParser {
-  def parseDataInputs(data_input: String): Map[String, Seq[Map[String, Any]]] = parseAll(expr, data_input).get
+
+  def parseDataInputs(data_input: String): Map[String, Seq[Map[String, Any]]] = {
+    try {
+      parseAll(expr, data_input).get
+    } catch {
+      case e: Exception => throw new BadRequestException(e.getMessage, e)
+    }
+  }
 }
 
 object parseTest extends ObjectNotationParser {

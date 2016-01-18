@@ -23,5 +23,10 @@ object wpsOperationParser extends OperationNotationParser {
   def parseOp(operation: String): Map[String, Any] = parseAll(expr, operation.stripPrefix("\"").stripSuffix("\"")).get
 }
 
+object testOperationParser extends App {
+  val input = "v3:CWT.average(v0,axis:xy)"
+  val parsed_input = wpsOperationParser.parseOp( input )
+  println( parsed_input.toString )
+}
 
 

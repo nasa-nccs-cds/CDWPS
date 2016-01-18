@@ -1,12 +1,12 @@
 package nccs.process
 
-
 import nccs.engine.ExecutionManager
 import scala.collection.mutable
 import scala.collection.immutable
 import scala.xml._
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import nccs.process.exceptions._
 
 class ProcessInput(val name: String, val itype: String, val maxoccurs: Int, val minoccurs: Int) {
 
@@ -44,11 +44,17 @@ class ProcessList(val process_list: List[Process]) {
 
 class ProcessManager(process_list: List[Process]) {
   private val processMap: Map[String, Process] = Map[String, Process](process_list.map(p => (p.name.toLowerCase -> p)): _*)
+  val logger = LoggerFactory.getLogger( classOf[TaskRequest] )
 
   def printLoggerInfo(): Unit = {
     import ch.qos.logback.classic.LoggerContext
     import ch.qos.logback.core.util.StatusPrinter
     StatusPrinter.print((LoggerFactory.getILoggerFactory).asInstanceOf[LoggerContext])
+  }
+
+  def unacceptable( msg: String ): Unit = {
+    logger.error( msg )
+    throw new NotAcceptableException( msg )
   }
 
   def describeProcess(name: String) = processMap.get(name.toLowerCase) match {
@@ -58,25 +64,23 @@ class ProcessManager(process_list: List[Process]) {
 
   def listProcesses() = <processes> { processMap.values.map(_.toXmlHeader) } </processes>
 
-  def executeProcess(process_name: String, datainputs: Map[String, Seq[ Map[String, Any]] ], runargs: Map[String, Any]) = {
+  def executeProcess(process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): Option[TaskRequest] = {
     import nccs.process.TaskRequest
     import nccs.engine.ExecutionManager
     processMap.get(process_name.toLowerCase) match {
       case Some(p) =>
-        val tr = TaskRequest( process_name, datainputs )
-        if( validateProcesses( tr ) ) {
-          ExecutionManager.execute( tr, runargs )
+        try {
+          val tr = TaskRequest(process_name, datainputs)
+          ExecutionManager.execute(tr, runargs)
+          Some(tr)
+        } catch {
+          case  e: Exception  => {
+            unacceptable( e.getMessage ); None
+          }
         }
-        Some(tr)
-      case None =>
-        None
+      case None => None
     }
   }
-
-  def validateProcesses( tr: TaskRequest ): Boolean = {
-    true
-  }
-
 }
 
 object webProcessManager extends ProcessManager(
