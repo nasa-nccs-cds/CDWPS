@@ -26,16 +26,26 @@ object wpsObjectParser extends ObjectNotationParser {
 
   def parseDataInputs(data_input: String): Map[String, Seq[Map[String, Any]]] = {
     try {
-      parseAll(expr, data_input).get
+      parseAll(expr, data_input) match {
+        case result: Success[_] => result.get.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
+        case err: Error => throw new BadRequestException(err.toString)
+        case err: Failure => throw new BadRequestException(err.toString)
+      }
     } catch {
       case e: Exception => throw new BadRequestException(e.getMessage, e)
     }
   }
 }
 
-object parseTest extends ObjectNotationParser {
-  def main(input_args: Array[String]) = {
-    val data_input = "[domain={\"id\":\"d0\",\"level\":{\"start\":0,\"end\":1,\"system\":\"indices\"}},variable={\"dset\":\"MERRA/mon/atmos\",\"id\":\"v0:hur\",\"domain\":\"d0\"},operation=\"(v0,axis:xy)\"]"
-    println(parseAll(expr, data_input))
+object parseTest extends App {
+  val data_input = "[domain={\"id\":\"d0\",\"level\":{\"start\":0,\"end\":1,\"system\":\"indices\"}},variable={\"dset\":\"MERRA/mon/atmos\",\"id\":\"v0:hur\",\"domain\":\"d0\"},operation=\"(v0,axis:xy)\"]"
+  val bad_data_input = "[domain={\"id\":\"d0\",\"level\":{\"start\":0,\"end\":1,\"system\":\"indices\"},variable={\"dset\":\"MERRA/mon/atmos\",\"id\":\"v0:hur\",\"domain\":\"d0\"},operation=\"(v0,axis:xy)\"]"
+  try {
+    val result = wpsObjectParser.parseDataInputs(data_input)
+    println("Parse Result: " + result)
+  } catch {
+    case e: BadRequestException => {
+      println("BadRequestException: " + e.getMessage)
+    }
   }
 }

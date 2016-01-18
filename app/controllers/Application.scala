@@ -47,9 +47,9 @@ class WPS extends Controller {
             case None => NotFound(<error type="ProcessNotFound" message={ "Unrecognized process: " + identifier }/>)
           }
         } catch {
-          case e: BadRequestException => BadRequest(<error type="ImproperlyFormedRequest" message={ e.getMessage }/>)
-          case e: NotAcceptableException => NotAcceptable(<error type="UnacceptableRequest" message={ e.getMessage }/>)
-          case e: Exception => InternalServerError(<error type="InternalServerError" message={ e.getMessage }/>)
+          case e: BadRequestException => BadRequest(<error type="ImproperlyFormedRequest">{ "<![CDATA[\n " + e.getMessage + "\n]]>" }</error>)
+          case e: NotAcceptableException => NotAcceptable(<error type="UnacceptableRequest">{ "<![CDATA[\n " + e.getMessage + "\n]]>" }</error>)
+          case e: Exception => InternalServerError(<error type="InternalServerError">{ "<![CDATA[\n " + e.getMessage + "\n]]>" }</error>)
         }
       }
     }
