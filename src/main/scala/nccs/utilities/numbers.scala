@@ -3,12 +3,12 @@ package nccs.utilities.numbers
 class IllegalNumberException( value: Any ) extends RuntimeException("Error, " + value.toString + " is not a valid Number")
 
 object GenericNumber {
-  val floatingPointNumber = """^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$""".r
-  val integerNumber = """^[-+]?[0-9]*$""".r
+  val floatingPointNumber = """[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?""".r
+  val integerNumber = """[-+]?[0-9]*""".r
   def parseString( sx: String ): GenericNumber = {
-    sx.trim match {
-      case  floatingPointNumber(sx) =>  new FloatNumber(sx.toFloat)
+    sx match {
       case  integerNumber(sx) =>        new IntNumber(sx.toInt)
+      case  floatingPointNumber(sx) =>  new FloatNumber(sx.toFloat)
       case x =>                         throw new IllegalNumberException(x)
     }
   }
@@ -57,8 +57,8 @@ class UndefinedNumber extends GenericNumber {
 }
 
 object testNumbers extends App {
-  val vals = List( GenericNumber(40), GenericNumber(40.5), GenericNumber("40"), GenericNumber("40.5") )
-  vals.foreach( x => println( x.toString ) )
+  val x = GenericNumber("40")
+  println( x.toString )
 }
 
 
