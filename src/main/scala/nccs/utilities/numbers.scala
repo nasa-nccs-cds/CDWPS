@@ -3,13 +3,16 @@ package nccs.utilities.numbers
 class IllegalNumberException( value: Any ) extends RuntimeException("Error, " + value.toString + " is not a valid Number")
 
 object GenericNumber {
-  val floatingPointNumber = """[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?""".r
-  val integerNumber = """[-+]?[0-9]*""".r
-  def parseString( sx: String ): GenericNumber = {
-    sx match {
-      case  integerNumber(sx) =>        new IntNumber(sx.toInt)
-      case  floatingPointNumber(sx) =>  new FloatNumber(sx.toFloat)
-      case x =>                         throw new IllegalNumberException(x)
+
+  def fromString(sx: String): GenericNumber = {
+    try {
+      new IntNumber(sx.toInt)
+    } catch {
+      case err: NumberFormatException => try {
+        new FloatNumber(sx.toFloat)
+      } catch {
+        case err: NumberFormatException => throw new IllegalNumberException(sx)
+      }
     }
   }
   def apply( anum: Any = None ): GenericNumber = {
@@ -19,7 +22,7 @@ object GenericNumber {
       case dx: Double =>  new DoubleNumber(dx)
       case sx: Short =>   new ShortNumber(sx)
       case None =>        new UndefinedNumber()
-      case sx: String =>  parseString( sx )
+      case sx: String =>  fromString( sx )
       case x =>           throw new IllegalNumberException(x)
     }
   }
@@ -57,8 +60,9 @@ class UndefinedNumber extends GenericNumber {
 }
 
 object testNumbers extends App {
+  def testIntMethod( ival: Int ): Unit = { println( s" Got Int: $ival" ) }
   val x = GenericNumber("40")
-  println( x.toString )
+  println( "CLASS = " + x.getClass.getName + ", VALUE = " + x.toString )
 }
 
 

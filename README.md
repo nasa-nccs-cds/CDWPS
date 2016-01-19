@@ -30,7 +30,7 @@ _Climate Data Analytic Services WPS application built on scala, play, Spark, Akk
 
     1) Install IntelliJ IDEA CE from https://www.jetbrains.com/idea/download/ with Scala plugin enabled.
     
-    2) Import cdas project
+    2) Start IDEA and import the cdas Project from Version Control (github) using the address https://github.com/nasa-nccs-cds/cdas2.git.
     
 
 ####  Project Configuration:
