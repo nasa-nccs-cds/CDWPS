@@ -8,9 +8,11 @@ class ObjectNotationParser extends JavaTokenParsers {
   def expr: Parser[Map[String, Seq[Map[String, Any]]]] = "[" ~> repsep(decl, ",") <~ "]" ^^ (Map() ++ _)
   def decl: Parser[(String, Seq[Map[String, Any]])] = key ~ "=" ~ objlist ^^ { case arg0 ~ "=" ~ arg1 => (normalize(arg0) -> arg1) }
   def key: Parser[String] = """[a-zA-Z_]\w*""".r
+  def integerNumber: Parser[String] = """[0-9]*""".r
   def value: Parser[Any] = (
     stringLiteral
     | omap
+    | integerNumber ^^ (_.toInt)
     | floatingPointNumber ^^ (_.toFloat)
     | "true" ^^ (x => true)
     | "false" ^^ (x => false)

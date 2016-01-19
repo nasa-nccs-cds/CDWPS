@@ -8,6 +8,7 @@ import mutable.ListBuffer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import nccs.process.exceptions._
+import nccs.utilities.numbers.GenericNumber
 
 case class ErrorReport(severity: String, message: String) {
   override def toString() = {
@@ -137,16 +138,10 @@ class ContainerBase {
     </container>
   }
 
-  def getFloatValue( opt_val: Option[Any] ): Float = {
+  def getGenericNumber( opt_val: Option[Any] ): GenericNumber = {
     opt_val match {
-      case Some(p) => p match {
-        case ix: Int => ix.toFloat;
-        case fx: Float => fx.toFloat;
-        case dx: Double => dx.toFloat;
-        case sx: Short => sx.toFloat;
-        case _ =>  Float.NaN;
-      }
-      case None => Float.NaN
+      case Some(p) => GenericNumber(p)
+      case None =>    GenericNumber()
     }
   }
   def getStringValue( opt_val: Option[Any] ): String = {
@@ -160,7 +155,7 @@ class ContainerBase {
 object containerTest extends App {
   val c = new ContainerBase()
   val tval = Some( 4.7 )
-  val fv = c.getFloatValue( tval )
+  val fv = c.getGenericNumber( tval )
   println( fv )
 }
 
@@ -209,8 +204,8 @@ object DomainAxis extends ContainerBase {
     axis_spec match {
       case generic_axis_map: Map[_,_] =>
         val axis_map = getStringKeyMap( generic_axis_map )
-        val start = getFloatValue( axis_map.get("start") )
-        val end = getFloatValue( axis_map.get("end") )
+        val start = getGenericNumber( axis_map.get("start") )
+        val end = getGenericNumber( axis_map.get("end") )
         val system = getStringValue( axis_map.get("system") )
         val bounds = getStringValue( axis_map.get("bounds") )
         new Some( new DomainAxis( normalize(id), start, end, system, bounds ) )
@@ -223,7 +218,7 @@ object DomainAxis extends ContainerBase {
   }
 }
 
-class DomainAxis( val d_id: String, val d_start: Float, val d_end: Float, val d_system: String, val d_bounds: String ) extends ContainerBase  {
+class DomainAxis( val d_id: String, val d_start: GenericNumber, val d_end: GenericNumber, val d_system: String, val d_bounds: String ) extends ContainerBase  {
 
   override def toString = {
     s"DomainAxis { id = $d_id, start = $d_start, end = $d_end, system = $d_system, bounds = $d_bounds }"
