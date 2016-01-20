@@ -1,11 +1,13 @@
 package nccs.engine
 import nccs.process.TaskRequest
+import org.slf4j.LoggerFactory
 
 class ExecutionManager {}
 
 object ExecutionManager {
+  val logger = LoggerFactory.getLogger( classOf[ExecutionManager] )
 
   def execute( request: TaskRequest, run_args: Map[String,Any] ) = {
-    SparkEngine.execute( request, run_args )
+    logger.info("Execute { request: " + request.toString + ", runargs: " + run_args.toString + "}"  )
   }
 }
