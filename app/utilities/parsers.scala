@@ -26,6 +26,8 @@ class ObjectNotationParser extends JavaTokenParsers {
 
 object wpsObjectParser extends ObjectNotationParser {
 
+  def cdata(obj: Any): String = "<![CDATA[\n " + obj.toString + "\n]]>"
+
   def parseDataInputs(data_input: String): Map[String, Seq[Map[String, Any]]] = {
     try {
       parseAll(expr, data_input) match {

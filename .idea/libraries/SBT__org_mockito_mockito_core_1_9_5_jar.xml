@@ -4,6 +4,8 @@
       <root url="jar://$USER_HOME$/.ivy2/cache/org.mockito/mockito-core/jars/mockito-core-1.9.5.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.mockito/mockito-core/srcs/mockito-core-1.9.5-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

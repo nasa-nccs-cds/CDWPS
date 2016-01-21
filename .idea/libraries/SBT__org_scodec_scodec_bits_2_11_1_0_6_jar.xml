@@ -4,6 +4,8 @@
       <root url="jar://$USER_HOME$/.ivy2/cache/org.scodec/scodec-bits_2.11/bundles/scodec-bits_2.11-1.0.6.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.scodec/scodec-bits_2.11/srcs/scodec-bits_2.11-1.0.6-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

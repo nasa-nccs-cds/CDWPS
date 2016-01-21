@@ -4,6 +4,8 @@
       <root url="jar://$USER_HOME$/.ivy2/cache/com.typesafe.netty/netty-http-pipelining/jars/netty-http-pipelining-1.1.4.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.typesafe.netty/netty-http-pipelining/srcs/netty-http-pipelining-1.1.4-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
