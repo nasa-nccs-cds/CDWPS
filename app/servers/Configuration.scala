@@ -3,34 +3,31 @@ import utilities.parsers.wpsObjectParser.cdata
 
 abstract class ServiceProvider {
 
-  def executeProcess(identifier: String, parsed_data_inputs: Map[String, Any], runargs: Map[String, Any]): xml.Elem
+  def executeProcess(identifier: String, parsed_data_inputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem
 
 }
 
 object esgfServiceProvider extends ServiceProvider {
 
-  override def executeProcess(identifier: String, parsed_data_inputs: Map[String, Any], runargs: Map[String, Any]): xml.Elem = {
-    //    import nccs.process.TaskRequest
-    //    import nccs.engine.ExecutionManager
-    //    try {
-    //      val tr = TaskRequest(process_name, datainputs)
-    //      ExecutionManager.execute(tr, runargs)
-    //      Some(tr)
-    //    } catch {
-    //      case e: Exception => {
-    //        unacceptable(e.getMessage);
-    //        None
-    //      }
-    //    }
-    <result id={ identifier }/>
+  override def executeProcess( process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem = {
+      import nccs.process.TaskRequest
+      import nccs.engine.ExecutionManager
+      try {
+        val tr = TaskRequest(process_name, datainputs)
+        ExecutionManager.execute(tr, runargs)
+      } catch {
+        case e: Exception => {
+          <error id="Execution Error"> {e.getMessage} </error>
+        }
+      }
   }
 }
 
 object demoServiceProvider extends ServiceProvider {
 
-  override def executeProcess(identifier: String, parsed_data_inputs: Map[String, Any], runargs: Map[String, Any]): xml.Elem = {
+  override def executeProcess(identifier: String, parsed_data_inputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem = {
     <result id={ identifier }>
-      <inputs> { cdata(parsed_data_inputs) } </inputs>
+      <inputs>  { cdata(parsed_data_inputs) } </inputs>
       <runargs> { cdata(runargs) } </runargs>
     </result>
   }

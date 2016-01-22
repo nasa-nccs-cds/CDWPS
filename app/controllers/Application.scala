@@ -1,5 +1,6 @@
 package controllers
 
+import org.slf4j.LoggerFactory
 import play.api._
 import play.api.mvc._
 import process.webProcessManager
@@ -14,6 +15,7 @@ class Application extends Controller {
 }
 
 class WPS extends Controller {
+  val logger = LoggerFactory.getLogger(classOf[WPS])
 
   def demo = Action {
     Ok(views.html.demo())
@@ -37,7 +39,7 @@ class WPS extends Controller {
         }
       case "execute" => {
         val runargs = Map[String, Any]("responseform" -> responseform, "storeexecuteresponse" -> storeexecuteresponse, "status" -> status)
-        Logger.info(s"WPS EXECUTE: identifier=$identifier, datainputs=$datainputs")
+        logger.info(s"WPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs")
         try {
 
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
