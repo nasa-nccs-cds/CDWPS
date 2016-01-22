@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="09b660f7-097e-4db7-89d1-6ab823ea950b" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/esgfwpsapi_2.11-1.0-SNAPSHOT.jar" afterPath="$PROJECT_DIR$/lib/esgfwpsapi_2.11-1.0-SNAPSHOT.jar" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="cdas.iws" />
@@ -876,7 +875,13 @@
       <option name="project" value="LOCAL" />
       <updated>1453503314097</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Update plugin jar">
+      <created>1453506004657</created>
+      <option name="number" value="00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1453506004657</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -925,7 +930,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Add NetCDF suport using unamaged jar." />
     <MESSAGE value="Insert esgf package in import" />
-    <option name="LAST_COMMIT_MESSAGE" value="Insert esgf package in import" />
+    <MESSAGE value="Update plugin jar" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update plugin jar" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
