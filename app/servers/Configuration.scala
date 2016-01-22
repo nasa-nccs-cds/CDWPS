@@ -9,15 +9,15 @@ abstract class ServiceProvider {
 
 object esgfServiceProvider extends ServiceProvider {
 
-  override def executeProcess( process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem = {
-      import nccs.engine.demoExecutionManager
-      try {
-        demoExecutionManager.execute(process_name, datainputs, runargs)
-      } catch {
-        case e: Exception => {
-          <error id="Execution Error"> {e.getMessage} </error>
-        }
-      }
+  override def executeProcess(process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem = {
+    import nccs.esgf.engine.demoExecutionManager
+    try {
+
+      demoExecutionManager.execute(process_name, datainputs, runargs)
+
+    } catch {
+      case e: Exception => <error id="Execution Error"> {e.getMessage} </error>
+    }
   }
 }
 
@@ -35,8 +35,8 @@ object demoServiceProvider extends ServiceProvider {
 object ServiceProviderConfiguration {
 
   val providers = Seq(
-    ("esgf" -> esgfServiceProvider),
-    ("demo" -> demoServiceProvider)
+    "esgf" -> esgfServiceProvider,
+    "demo" -> demoServiceProvider
   )
 
   val default_service = "demo"
