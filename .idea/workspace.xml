@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="09b660f7-097e-4db7-89d1-6ab823ea950b" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/lib/esgfwpsapi_2.11-1.0-SNAPSHOT-sources.jar" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/lib/esgfwpsapi_2.11-1.0-SNAPSHOT.jar" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib/esgfwpsapi_2.11-1.0-SNAPSHOT.jar" afterPath="$PROJECT_DIR$/lib/esgfwpsapi_2.11-1.0-SNAPSHOT.jar" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="cdas.iws" />
@@ -225,8 +224,8 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="441" />
-    <option name="y" value="25" />
+    <option name="x" value="442" />
+    <option name="y" value="68" />
     <option name="width" value="1775" />
     <option name="height" value="1117" />
   </component>
@@ -871,11 +870,17 @@
       <option name="project" value="LOCAL" />
       <updated>1453499112326</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Insert esgf package in import">
+      <created>1453503314097</created>
+      <option name="number" value="00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1453503314097</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="441" y="25" width="1775" height="1117" extended-state="0" />
+    <frame x="442" y="68" width="1775" height="1117" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
