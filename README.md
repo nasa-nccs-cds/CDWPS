@@ -1,6 +1,6 @@
 ###                                BDWPS Project
 
-_WPS implementation built on scala/play, designed to interface to big data frameworks such as Spark, Akka, etc. Implements the ESGF-CWT climate data services api._
+_WPS implementation built on scala/play, designed to interface to big data frameworks such as Spark, Akka, etc. Includes a plugin interface to implement various service APIs.  Distributed with a plugin (https://github.com/nasa-nccs-cds/esgfWpsApi) implementing the ESGF-CWT climate data services api._
 
 ####  Prerequisite: Install the Scala develpment tools:
 
@@ -32,10 +32,16 @@ _WPS implementation built on scala/play, designed to interface to big data frame
     
     2) Start IDEA and import the BDWPS Project from Version Control (github) using the address https://github.com/nasa-nccs-cds/BDWPS.git.
     
+    3) Service provider/api plugin development: See https://github.com/nasa-nccs-cds/esgfWpsApi
+
+    
 
 ####  Project Configuration:
 
-    1) Logging: Edit conf/logback.xml
+    1) Logging: See conf/logback.xml
+    
+    2) Configure plugins: See app/servers/Configuration.scala
+    
     
 
     
