@@ -10,9 +10,9 @@ abstract class ServiceProvider {
 object esgfServiceProvider extends ServiceProvider {
 
   override def executeProcess( process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem = {
-      import nccs.engine.ExecutionManager
+      import nccs.engine.demoExecutionManager
       try {
-        ExecutionManager.execute(process_name, datainputs, runargs)
+        demoExecutionManager.execute(process_name, datainputs, runargs)
       } catch {
         case e: Exception => {
           <error id="Execution Error"> {e.getMessage} </error>
