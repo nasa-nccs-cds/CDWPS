@@ -37,7 +37,7 @@ class WPS extends Controller {
           case Some(p) => Ok(p)
           case None => NotFound("Unrecognized process")
         }
-      case "execute" => {
+      case "execute" =>
         val runargs = Map[String, Any]("responseform" -> responseform, "storeexecuteresponse" -> storeexecuteresponse, "status" -> status)
         logger.info(s"WPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs")
         try {
@@ -56,20 +56,8 @@ class WPS extends Controller {
                                                      { "<![CDATA[\n " + e.getMessage + "\n]]>" }
                                                    </error>)
         }
-      }
     }
   }
 }
 
-//object testWPS extends App {
-//  val identifier = "CWT.average"
-//  val datainputs = """[domain=[{"id":"d0","level":{"start":0,"end":1,"system":"indices"}},{"id":"d1","level":{"start":1,"end":2,"system":"indices"}}],variable=[{"dset":"MERRA/mon/atmos","id":"hur:v0","domain":"d0"},{"dset":"MERRA/mon/atmos","id":"tmp:v1","domain":"d1"}],operation=["CWT.average(v0,axis:xy)","CWT.anomaly(v1,axis:xy)"]]"""
-//  val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
-//  val runargs = Map[String, Any]()
-//  val result = webProcessManager.executeProcess(identifier, parsed_data_inputs, runargs)
-//  result match {
-//    case Some(p) => println(p)
-//    case None => println("Unrecognized process")
-//  }
-//}
 

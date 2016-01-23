@@ -10,47 +10,47 @@ import servers.APIManager
 
 class ProcessInput(val name: String, val itype: String, val maxoccurs: Int, val minoccurs: Int) {
 
-  def toXml() = {
-    <input id={ name } type={ itype } maxoccurs={ maxoccurs.toString() } minoccurs={ minoccurs.toString() }/>
+  def toXml = {
+    <input id={ name } type={ itype } maxoccurs={ maxoccurs.toString } minoccurs={ minoccurs.toString }/>
   }
 }
 
 class Process(val name: String, val description: String, val inputs: List[ProcessInput]) {
 
-  def toXml() =
+  def toXml =
     <process id={ name }>
       <description id={ description }> </description>
       <inputs>
-        { inputs.map(_.toXml()) }
+        { inputs.map(_.toXml ) }
       </inputs>
     </process>
 
-  def toXmlHeader() =
+  def toXmlHeader =
     <process id={ name }> <description> { description } </description> </process>
 }
 
 class ProcessList(val process_list: List[Process]) {
 
-  def toXml() =
+  def toXml =
     <processes>
-      { process_list.map(_.toXml()) }
+      { process_list.map(_.toXml ) }
     </processes>
 
-  def toXmlHeaders() =
+  def toXmlHeaders =
     <processes>
-      { process_list.map(_.toXmlHeader()) }
+      { process_list.map(_.toXmlHeader ) }
     </processes>
 }
 
 class ProcessManager(process_list: List[Process]) {
-  private val processMap: Map[String, Process] = Map[String, Process](process_list.map(p => (p.name.toLowerCase -> p)): _*)
+  private val processMap: Map[String, Process] = Map[String, Process](process_list.map( p => p.name.toLowerCase -> p ): _*)
   val logger = LoggerFactory.getLogger(classOf[ProcessManager])
   def apiManager = APIManager()
 
-  def printLoggerInfo(): Unit = {
+  def printLoggerInfo = {
     import ch.qos.logback.classic.LoggerContext
     import ch.qos.logback.core.util.StatusPrinter
-    StatusPrinter.print((LoggerFactory.getILoggerFactory).asInstanceOf[LoggerContext])
+    StatusPrinter.print( LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext] )
   }
 
   def unacceptable(msg: String): Unit = {
@@ -63,7 +63,7 @@ class ProcessManager(process_list: List[Process]) {
     case None => None
   }
 
-  def listProcesses() = <processes> { processMap.values.map(_.toXmlHeader) } </processes>
+  def listProcesses = <processes> { processMap.values.map(_.toXmlHeader) } </processes>
 
   def executeProcess(service: String, process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem = {
     processMap.get(process_name.toLowerCase) match {
@@ -87,7 +87,7 @@ object webProcessManager extends ProcessManager(
 )
 
 object testProcessManager extends App {
-  println(webProcessManager.listProcesses())
+  println( webProcessManager.listProcesses )
   val process = webProcessManager.describeProcess("CWT.Sum")
   process match {
     case Some(p) => println(p)

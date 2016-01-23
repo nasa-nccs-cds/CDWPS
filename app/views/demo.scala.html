@@ -4,22 +4,22 @@
     <hr>
     <h3> Get Capabilities: </h3>
     <p CLASS="indented"> <h3><a href="http://localhost:9000/wps?version=2.0;request=getcapabilities">
-    <code> http://localhost:9000/wps?version=2.0;request=GetCapabilities </code> </a> </h3></p>
+    <code> http://localhost:9000/wps?version=2.0;request=GetCapabilities </code> </a> </h3>
     <hr>
     <h3> Describe Process: </h3>
     <p CLASS="indented"><h3> <a href="http://localhost:9000/wps?version=2.0;request=describeprocess;identifier=CWT.sum">
     <code> http://localhost:9000/wps?version=2.0;request=DescribeProcess;identifier=Sum </code> </a> </h3>
     <hr>
     <h3> Execute: (single variable, domain, and op)</h3>
-    <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?version=1.0.0&request=Execute&service=esgf&identifier=CWT.average&datainputs=[domain={"id":"d0","level":{"start":0,"end":1,"system":"indices"}},variable={"dset":"MERRA/mon/atmos","id":"hur:v0","domain":"d0"},operation="(v0,axis:xy)"]'>
-    <code>   http://localhost:9000/wps?version=1.0.0&request=Execute&service=esgf&identifier=CWT.average&datainputs=[domain={"id":"d0","level":{"start":0,"end":1,"system":"indices"}},variable={"dset":"MERRA/mon/atmos","id":"hur:v0","domain":"d0"},operation="(v0,axis:xy)"] </code> </a> </h3>
+    <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?version=1.0.0&request=Execute&service=esgf&identifier=CWT.average&datainputs=[domain={"name":"d0","level":{"start":0,"end":1,"system":"indices"}},variable={"uri":"collection://MERRA/mon/atmos","name":"hur:v0","domain":"d0"},operation="(v0,axis:xy)"]'>
+    <code>   http://localhost:9000/wps?version=1.0.0&request=Execute&service=esgf&identifier=CWT.average&datainputs=[domain={"name":"d0","level":{"start":0,"end":1,"system":"indices"}},variable={"uri":"collection://MERRA/mon/atmos","name":"hur:v0","domain":"d0"},operation="(v0,axis:xy)"] </code> </a> </h3>
     <hr>
     <h3> Execute: (multiple variables, domains, and ops)</h3>
-    <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?version=1.0.0&request=Execute&service=esgf&identifier=CWT.average&datainputs=[domain=[{"id":"d0","level":{"start":0,"end":1,"system":"indices"}},{"id":"d1","level":{"start":1,"end":2,"system":"indices"}}],variable=[{"dset":"MERRA/mon/atmos","id":"hur:v0","domain":"d0"},{"dset":"MERRA/mon/atmos","id":"tmp:v1","domain":"d1"}],operation=["CWT.average(v0,axis:xy)","CWT.anomaly(v1,axis:xy)"]]'>
-    <code>   http://localhost:9000/wps?version=1.0.0&request=Executee&service=esgf&identifier=CWT.average&datainputs=[domain=[{"id":"d0","level":{"start":0,"end":1,"system":"indices"}},{"id":"d1","level":{"start":1,"end":2,"system":"indices"}}],variable=[{"dset":"MERRA/mon/atmos","id":"hur:v0","domain":"d0"},{"dset":"MERRA/mon/atmos","id":"tmp:v1","domain":"d1"}],operation=["CWT.average(v0,axis:xy)","CWT.anomaly(v1,axis:xy)"]] </code> </a> </h3>
+    <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?version=1.0.0&request=Execute&service=esgf&identifier=CWT.average&datainputs=[domain=[{"name":"d0","level":{"start":0,"end":1,"system":"indices"}},{"name":"d1","level":{"start":1,"end":2,"system":"indices"}}],variable=[{"uri":"collection://MERRA/mon/atmos","name":"hur:v0","domain":"d0"},{"uri":"collection://MERRA/mon/atmos","name":"tmp:v1","domain":"d1"}],operation=["CWT.average(v0,axis:xy)","CWT.anomaly(v1,axis:xy)"]]'>
+    <code>   http://localhost:9000/wps?version=1.0.0&request=Executee&service=esgf&identifier=CWT.average&datainputs=[domain=[{"name":"d0","level":{"start":0,"end":1,"system":"indices"}},{"name":"d1","level":{"start":1,"end":2,"system":"indices"}}],variable=[{"uri":"collection://MERRA/mon/atmos","name":"hur:v0","domain":"d0"},{"uri":"collection://MERRA/mon/atmos","name":"tmp:v1","domain":"d1"}],operation=["CWT.average(v0,axis:xy)","CWT.anomaly(v1,axis:xy)"]] </code> </a> </h3>
     <hr>
     <h3> Execute: Syntax error</h3>
-    <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?version=1.0.0&request=Execute&service=esgf&identifier=CWT.average&datainputs=[domain={"id":"d0";"level":{"start":0,"end":1,"system":"indices"}},variable={"dset":"MERRA/mon/atmos","id":"v0:hur","domain":"d0"},operation="(v0,axis:xy)"]'>
-    <code>   http://localhost:9000/wps?version=1.0.0&request=Executee&service=esgf&identifier=CWT.average&datainputs=[domain={"id":"d0";"level":{"start":0,"end":1,"system":"indices"}},variable={"dset":"MERRA/mon/atmos","id":"hur:v0","domain":"d0"},operation="(v0,axis:xy)"] </code> </a> </h3>
+    <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?version=1.0.0&request=Execute&service=esgf&identifier=CWT.average&datainputs=[domain={"name":"d0";"level":{"start":0,"end":1,"system":"indices"}},variable={"uri":"collection://MERRA/mon/atmos","name":"v0:hur","domain":"d0"},operation="(v0,axis:xy)"]'>
+    <code>   http://localhost:9000/wps?version=1.0.0&request=Executee&service=esgf&identifier=CWT.average&datainputs=[domain={"name":"d0";"level":{"start":0,"end":1,"system":"indices"}},variable={"uri":"collection://MERRA/mon/atmos","name":"hur:v0","domain":"d0"},operation="(v0,axis:xy)"] </code> </a> </h3>
     <hr>
 }
