@@ -10,7 +10,7 @@ abstract class ServiceProvider {
 object esgfServiceProvider extends ServiceProvider {
 
   override def executeProcess(process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem = {
-    import nccs.esgf.engine.demoExecutionManager
+    import nasa.nccs.esgf.engine.demoExecutionManager
     try {
 
       demoExecutionManager.execute(process_name, datainputs, runargs)
