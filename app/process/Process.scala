@@ -70,6 +70,7 @@ class ProcessManager(process_list: List[Process]) {
       case Some(p) =>
         apiManager.getServiceProvider(service) match {
           case Some(serviceProvider) =>
+            logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
             serviceProvider.executeProcess(process_name, datainputs, runargs)
           case None =>
             throw new NotAcceptableException("Unrecognized service: " + service)

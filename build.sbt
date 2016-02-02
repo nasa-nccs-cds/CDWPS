@@ -15,6 +15,8 @@ libraryDependencies ++= Seq( cache, ws, specs2 % Test )
 
 libraryDependencies ++= Dependencies.scala
 
+libraryDependencies ++= Dependencies.CDS2
+
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
