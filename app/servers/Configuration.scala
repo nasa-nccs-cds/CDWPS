@@ -6,19 +6,23 @@ abstract class ServiceProvider {
 
   def executeProcess(identifier: String, parsed_data_inputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem
 
+  def listProcesses(): xml.Elem
+
+  def describeProcess( identifier: String ): xml.Elem
+
 }
 
 object esgfServiceProvider extends ServiceProvider {
+  import nasa.nccs.esgf.engine.demoExecutionManager
 
   override def executeProcess(process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem = {
-    import nasa.nccs.esgf.engine.demoExecutionManager
-    try {
-
-      demoExecutionManager.execute(process_name, datainputs, runargs)
-
-    } catch {
-      case e: Exception => <error id="Execution Error"> {e.getMessage} </error>
-    }
+    try { demoExecutionManager.execute(process_name, datainputs, runargs) } catch { case e: Exception => <error id="Execution Error"> {e.getMessage} </error> }
+  }
+  override def describeProcess(process_name: String): xml.Elem = {
+    try {  demoExecutionManager.describeProcess(process_name) } catch {  case e: Exception => <error id="Execution Error"> {e.getMessage} </error> }
+  }
+  override def listProcesses(): xml.Elem = {
+    try {  demoExecutionManager.listProcesses() } catch {  case e: Exception => <error id="Execution Error"> {e.getMessage} </error> }
   }
 }
 
@@ -35,6 +39,20 @@ object cds2ServiceProvider extends ServiceProvider {
       case e: Exception => <error id="Execution Error"> {e.getMessage} </error>
     }
   }
+  override def describeProcess(process_name: String): xml.Elem = {
+    try {
+      cds2ExecutionManager.describeProcess( process_name )
+    } catch {
+      case e: Exception => <error id="Execution Error"> {e.getMessage} </error>
+    }
+  }
+  override def listProcesses(): xml.Elem = {
+    try {
+      cds2ExecutionManager.listProcesses()
+    } catch {
+      case e: Exception => <error id="Execution Error"> {e.getMessage} </error>
+    }
+  }
 }
 
 object demoServiceProvider extends ServiceProvider {
@@ -44,6 +62,12 @@ object demoServiceProvider extends ServiceProvider {
       <inputs>  { cdata(parsed_data_inputs) } </inputs>
       <runargs> { cdata(runargs) } </runargs>
     </result>
+  }
+  override def describeProcess(identifier: String): xml.Elem = {
+    <process id={ identifier }></process>
+  }
+  override def listProcesses(): xml.Elem = {
+    <processes></processes>
   }
 
 }

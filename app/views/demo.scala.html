@@ -3,12 +3,12 @@
     <h2> CDAS WPS demo </h2>
     <hr>
     <h3> Get Capabilities: </h3>
-    <p CLASS="indented"> <h3><a href="http://localhost:9000/wps?version=2.0;request=getcapabilities">
+    <p CLASS="indented"> <h3><a href="http://localhost:9000/wps?version=2.0&service=cds2&request=getcapabilities">
     <code> http://localhost:9000/wps?version=2.0;request=GetCapabilities </code> </a> </h3>
     <hr>
     <h3> Describe Process: </h3>
-    <p CLASS="indented"><h3> <a href="http://localhost:9000/wps?version=2.0;request=describeprocess;identifier=CWT.sum">
-    <code> http://localhost:9000/wps?version=2.0;request=DescribeProcess;identifier=Sum </code> </a> </h3>
+    <p CLASS="indented"><h3> <a href="http://localhost:9000/wps?version=2.0&service=cds2&request=describeprocess&identifier=CWT.average">
+    <code> http://localhost:9000/wps?version=2.0&service=cds2&request=describeprocess&identifier=CWT.average </code> </a> </h3>
     <hr>
     <h3> Execute: (single variable, domain, and op)</h3>
     <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?version=1.0.0&request=Execute&service=cds2&identifier=CWT.average&datainputs=[domain={"name":"d0","lat":{"start":10,"end":10,"system":"values"},"lon":{"start":10,"end":10,"system":"values"},"lev":{"start":8,"end":8,"system":"indices"}},variable={"uri":"collection://MERRA/mon/atmos","name":"hur:v0","domain":"d0"},operation="(v0,axis:xy)"]'>

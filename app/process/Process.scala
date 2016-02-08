@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 import process.exceptions._
 import servers.APIManager
 
-class ProcessInput(val name: String, val itype: String, val maxoccurs: Int, val minoccurs: Int) {
+/*class ProcessInput(val name: String, val itype: String, val maxoccurs: Int, val minoccurs: Int) {
 
   def toXml = {
     <input id={ name } type={ itype } maxoccurs={ maxoccurs.toString } minoccurs={ minoccurs.toString }/>
@@ -40,10 +40,9 @@ class ProcessList(val process_list: List[Process]) {
     <processes>
       { process_list.map(_.toXmlHeader ) }
     </processes>
-}
+}*/
 
-class ProcessManager(process_list: List[Process]) {
-  private val processMap: Map[String, Process] = Map[String, Process](process_list.map( p => p.name.toLowerCase -> p ): _*)
+class ProcessManager() {
   val logger = LoggerFactory.getLogger(classOf[ProcessManager])
   def apiManager = APIManager()
 
@@ -58,43 +57,39 @@ class ProcessManager(process_list: List[Process]) {
     throw new NotAcceptableException(msg)
   }
 
-  def describeProcess(name: String) = processMap.get(name.toLowerCase) match {
-    case Some(p) => Some(p.toXml)
-    case None => None
+  def describeProcess(service: String, name: String): xml.Elem = {
+    apiManager.getServiceProvider(service) match {
+      case Some(serviceProvider) =>
+        logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
+        serviceProvider.describeProcess( name )
+      case None =>
+        throw new NotAcceptableException("Unrecognized service: " + service)
+    }
   }
 
-  def listProcesses = <processes> { processMap.values.map(_.toXmlHeader) } </processes>
+  def listProcesses(service: String): xml.Elem = {
+    apiManager.getServiceProvider(service) match {
+      case Some(serviceProvider) =>
+        logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
+        serviceProvider.listProcesses()
+      case None =>
+        throw new NotAcceptableException("Unrecognized service: " + service)
+    }
+  }
 
   def executeProcess(service: String, process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem = {
-    processMap.get(process_name.toLowerCase) match {
-      case Some(p) =>
-        apiManager.getServiceProvider(service) match {
-          case Some(serviceProvider) =>
-            logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
-            serviceProvider.executeProcess(process_name, datainputs, runargs)
-          case None =>
-            throw new NotAcceptableException("Unrecognized service: " + service)
-        }
-      case None => throw new NotAcceptableException("Unrecognized process: " + process_name)
+    apiManager.getServiceProvider(service) match {
+      case Some(serviceProvider) =>
+        logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
+        serviceProvider.executeProcess(process_name, datainputs, runargs)
+      case None =>
+        throw new NotAcceptableException("Unrecognized service: " + service)
     }
   }
 }
 
-object webProcessManager extends ProcessManager(
-  List(
-    new Process("CWT.Sum", "SpatioTemporal Sum of Inputs", List(new ProcessInput("Var1", "Float", 1, 1), new ProcessInput("Var2", "Float", 1, 1))),
-    new Process("CWT.Average", "SpatioTemporal Ave of Inputs", List(new ProcessInput("Var1", "Float", 1, 1), new ProcessInput("Var2", "Float", 1, 1)))
-  )
-)
+object webProcessManager extends ProcessManager() {}
 
-object testProcessManager extends App {
-  println( webProcessManager.listProcesses )
-  val process = webProcessManager.describeProcess("CWT.Sum")
-  process match {
-    case Some(p) => println(p)
-    case None => println("Unrecognized process")
-  }
-}
 
 /*
 import org.scalatest.FunSuite
