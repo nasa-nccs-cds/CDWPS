@@ -12,6 +12,15 @@ _WPS implementation built on scala/play, designed to interface to big data frame
 
 ####  Install and run BDWPS:
 
+    0) Install dependent projects (this step will become unnecessasy when the NASA Maven server is up and running):
+    
+    >> git clone https://github.com/nasa-nccs-cds/CDAPI.git
+    >> cd CDAPI; sbt publish-local
+    >> https://github.com/nasa-nccs-cds/KernelModuleTemplate.git
+    >> cd KernelModuleTemplate; sbt publish-local
+    >> https://github.com/nasa-nccs-cds/CDS2.git
+    >> cd CDS2; sbt publish-local
+
     1) Checkout the BDWPS sources:
 
         >> git clone https://github.com/nasa-nccs-cds/BDWPS.git
