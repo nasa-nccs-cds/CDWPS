@@ -15,7 +15,7 @@ class Application extends Controller {
 }
 
 class WPS extends Controller {
-  val logger = LoggerFactory.getLogger(classOf[WPS])
+  val logger = LoggerFactory.getLogger(this.getClass)
 
   def demo = Action {
     Ok(views.html.demo())
@@ -36,7 +36,7 @@ class WPS extends Controller {
         case "describeprocess" =>
           Ok(webProcessManager.describeProcess(service, identifier))
         case "execute" =>
-          val runargs = Map[String, Any]("responseform" -> responseform, "storeexecuteresponse" -> storeexecuteresponse, "status" -> status)
+          val runargs = Map[String, String]("responseform" -> responseform.toString, "storeexecuteresponse" -> storeexecuteresponse.toString, "async" -> status.toString)
           logger.info(s"WPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs")
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val response = webProcessManager.executeProcess(service, identifier, parsed_data_inputs, runargs)

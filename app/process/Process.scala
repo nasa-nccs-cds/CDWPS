@@ -43,7 +43,7 @@ class ProcessList(val process_list: List[Process]) {
 }*/
 
 class ProcessManager() {
-  val logger = LoggerFactory.getLogger(classOf[ProcessManager])
+  val logger = LoggerFactory.getLogger(this.getClass)
   def apiManager = APIManager()
 
   def printLoggerInfo = {
@@ -77,7 +77,7 @@ class ProcessManager() {
     }
   }
 
-  def executeProcess(service: String, process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, Any]): xml.Elem = {
+  def executeProcess(service: String, process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, String]): xml.Elem = {
     apiManager.getServiceProvider(service) match {
       case Some(serviceProvider) =>
         logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))

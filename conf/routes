@@ -5,4 +5,4 @@
 GET     /                           controllers.Application.index
 GET     /wps/demo                   controllers.WPS.demo
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
-GET     /wps                        controllers.WPS.execute( version: String ?= "1.0.0", request: String, identifier: String ?= "", service: String ?= "", responseform: String ?= "", storeexecuteresponse: Boolean ?= true, status: Boolean ?= true, datainputs: String ?= "" )
+GET     /wps                        controllers.WPS.execute( version: String ?= "1.0.0", request: String, identifier: String ?= "", service: String ?= "", responseform: String ?= "", storeexecuteresponse: Boolean ?= true, status: Boolean ?= false, datainputs: String ?= "" )
