@@ -2,6 +2,8 @@ package controllers
 
 import org.slf4j.LoggerFactory
 import play.api._
+import java.io.File
+import play.api.Play
 import play.api.mvc._
 import process.webProcessManager
 import process.exceptions._
@@ -21,6 +23,15 @@ class WPS extends Controller {
     Ok(views.html.demo())
   }
 
+  def getResult( service: String, resultId: String ) = Action {
+    try{
+      webProcessManager.getResultFilePath( service, resultId )  match {
+        case Some( resultFilePath: String ) => Ok.sendFile ( new File(resultFilePath) )
+        case None => NotFound("Result not yet available")
+      }
+    } catch { case e: Exception => InternalServerError( e.getMessage ) }
+  }
+
   def execute(version: String,
               request: String,
               identifier: String,
@@ -37,7 +48,7 @@ class WPS extends Controller {
           Ok(webProcessManager.describeProcess(service, identifier))
         case "execute" =>
           val t0 = System.nanoTime()
-          val runargs = Map[String, String]("responseform" -> responseform.toString, "storeexecuteresponse" -> storeexecuteresponse.toString, "async" -> status.toString)
+          val runargs = Map("responseform" -> responseform.toString, "storeexecuteresponse" -> storeexecuteresponse.toString, "async" -> status.toString)
           logger.info(s"WPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs")
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val response = webProcessManager.executeProcess(service, identifier, parsed_data_inputs, runargs)

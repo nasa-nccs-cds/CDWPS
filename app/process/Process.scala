@@ -1,5 +1,7 @@
 package process
 
+import play.api.Play
+
 import scala.collection.mutable
 import scala.collection.immutable
 import scala.xml._
@@ -44,7 +46,7 @@ class ProcessList(val process_list: List[Process]) {
 
 class ProcessManager() {
   val logger = LoggerFactory.getLogger(this.getClass)
-  def apiManager = APIManager()
+  def apiManager = APIManager( )
 
   def printLoggerInfo = {
     import ch.qos.logback.classic.LoggerContext
@@ -82,8 +84,14 @@ class ProcessManager() {
       case Some(serviceProvider) =>
         logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
         serviceProvider.executeProcess(process_name, datainputs, runargs)
-      case None =>
-        throw new NotAcceptableException("Unrecognized service: " + service)
+      case None => throw new NotAcceptableException("Unrecognized service: " + service)
+    }
+  }
+
+  def getResultFilePath( service: String, resultId: String ): Option[String] = {
+    apiManager.getServiceProvider(service) match {
+      case Some(serviceProvider) => serviceProvider.getResultFilePath(resultId)
+      case None => throw new NotAcceptableException("Unrecognized service: " + service)
     }
   }
 }

@@ -2,8 +2,10 @@ package servers
 
 import java.io.{PrintWriter, StringWriter}
 import java.util.concurrent.ExecutionException
+import nasa.nccs.esgf.engine.demoExecutionManager
 import nasa.nccs.utilities.cdsutils
 import org.slf4j.LoggerFactory
+import play.api.Play
 import utilities.parsers.wpsObjectParser.cdata
 
 abstract class ServiceProvider {
@@ -18,6 +20,8 @@ abstract class ServiceProvider {
   def getCause( e: Exception ): Throwable = e match {
     case err: ExecutionException => err.getCause; case x => e
   }
+
+  def getResultFilePath( resultId: String ): Option[String]
 
   def fatal( e: Exception ): xml.Elem = {
     val err = getCause( e )
@@ -42,14 +46,19 @@ object esgfServiceProvider extends ServiceProvider {
   override def listProcesses(): xml.Elem = {
     try {  demoExecutionManager.listProcesses() } catch {  case e: Exception => <error id="Execution Error"> {e.getMessage} </error> }
   }
+  override def getResultFilePath( resultId: String ): Option[String] = None
 }
 
 object cds2ServiceProvider extends ServiceProvider {
   import nasa.nccs.cds2.engine.CDS2ExecutionManager
   import nasa.nccs.esgf.process.TaskRequest
 
-  val cds2ExecutionManager = new CDS2ExecutionManager()
+  val cds2ExecutionManager = new CDS2ExecutionManager( serverConfiguration )
 
+  def serverConfiguration: Map[String,String] = {
+    val config = Play.current.configuration
+    Map[String,String]( config.keys.map( key => ( key -> config.getString(key).getOrElse("") ) ).filter(!_._2.isEmpty).toSeq:_* )
+  }
   override def executeProcess(process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, String]): xml.Elem = {
     try {
       cdsutils.time( logger, "-->> Process %s: Total Execution Time: ".format(process_name) ) {
@@ -69,6 +78,7 @@ object cds2ServiceProvider extends ServiceProvider {
 
     } catch { case e: Exception => fatal(e) }
   }
+  override def getResultFilePath( resultId: String ): Option[String] = cds2ExecutionManager.getResultFilePath( resultId )
 }
 
 object demoServiceProvider extends ServiceProvider {
@@ -85,7 +95,7 @@ object demoServiceProvider extends ServiceProvider {
   override def listProcesses(): xml.Elem = {
     <processes></processes>
   }
-
+  override def getResultFilePath( resultId: String ): Option[String] = None
 }
 
 object ServiceProviderConfiguration {
