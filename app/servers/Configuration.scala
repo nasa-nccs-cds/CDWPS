@@ -2,11 +2,16 @@ package servers
 
 import java.io.{PrintWriter, StringWriter}
 import java.util.concurrent.ExecutionException
+
+import nasa.nccs.cdapi.kernels.ExecutionResults
 import nasa.nccs.esgf.engine.demoExecutionManager
 import nasa.nccs.utilities.cdsutils
 import org.slf4j.LoggerFactory
 import play.api.Play
 import utilities.parsers.wpsObjectParser.cdata
+
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 
 abstract class ServiceProvider {
   val logger = LoggerFactory.getLogger(this.getClass)
@@ -57,12 +62,20 @@ object cds2ServiceProvider extends ServiceProvider {
 
   def serverConfiguration: Map[String,String] = {
     val config = Play.current.configuration
-    Map[String,String]( config.keys.map( key => ( key -> config.getString(key).getOrElse("") ) ).filter(!_._2.isEmpty).toSeq:_* )
+    def get_config_value( key: String ): Option[String] = { try { config.getString(key) } catch { case ex: Exception => None } }
+    val map_pairs = for( key<-config.keys; value=get_config_value(key); if value.isDefined ) yield ( key -> value.get.toString )
+    Map[String,String]( map_pairs.toSeq:_* )
   }
   override def executeProcess(process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, String]): xml.Elem = {
     try {
       cdsutils.time( logger, "-->> Process %s: Total Execution Time: ".format(process_name) ) {
-        cds2ExecutionManager.execute(TaskRequest(process_name, datainputs), runargs)
+        if( runargs.getOrElse("async","false").toBoolean ) {
+          cds2ExecutionManager.executeAsync(TaskRequest(process_name, datainputs), runargs) match {
+            case ( resultId: String, futureResult: Future[ExecutionResults] ) => <result> {resultId} </result>
+            case x =>  <error id="Execution Error"> {"Malformed response from cds2ExecutionManager" } </error>
+          }
+        }
+        else  cds2ExecutionManager.blockingExecute(TaskRequest(process_name, datainputs), runargs)
       }
     } catch { case e: Exception => fatal(e) }
   }
