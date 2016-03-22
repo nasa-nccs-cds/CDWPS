@@ -13,6 +13,8 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 libraryDependencies ++= Seq( cache, ws, specs2 % Test )
 
+libraryDependencies += filters
+
 libraryDependencies ++= Dependencies.scala
 
 libraryDependencies ++= Dependencies.CDS2

@@ -1,4 +1,6 @@
 package utilities.parsers
+import org.slf4j.LoggerFactory
+
 import scala.util.parsing.combinator._
 
 class BadRequestException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
@@ -25,6 +27,7 @@ class ObjectNotationParser extends JavaTokenParsers {
 }
 
 object wpsObjectParser extends ObjectNotationParser {
+  val logger = LoggerFactory.getLogger(this.getClass)
 
   def cdata(obj: Any): String = "<![CDATA[\n " + obj.toString + "\n]]>"
 
@@ -32,8 +35,12 @@ object wpsObjectParser extends ObjectNotationParser {
     try {
       parseAll(expr, data_input) match {
         case result: Success[_] => result.get.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
-        case err: Error => throw new BadRequestException(err.toString)
-        case err: Failure => throw new BadRequestException(err.toString)
+        case err: Error =>
+          logger.error("Error Parsing '%s'".format(data_input) )
+          throw new BadRequestException(err.toString)
+        case err: Failure =>
+          logger.error("Error Parsing '%s'".format(data_input) )
+          throw new BadRequestException(err.toString)
       }
     } catch {
       case e: Exception => throw new BadRequestException(e.getMessage, e)

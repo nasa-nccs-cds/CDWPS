@@ -3,7 +3,8 @@
 # ~~~~
 
 GET     /                           controllers.Application.index
+GET     /test                       controllers.Application.test
 GET     /wps/demo                   controllers.WPS.demo
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
-GET     /wps/results                controllers.WPS.getResult( responseId: String, service: String ?= "cdas" )
-GET     /wps                        controllers.WPS.execute( version: String ?= "1.0.0", request: String, identifier: String ?= "", service: String ?= "cdas", responseform: String ?= "", storeexecuteresponse: Boolean ?= true, status: Boolean ?= false, datainputs: String ?= "" )
+GET     /wps/results                controllers.WPS.getResult( id: String, service: String ?= "cds2" )
+GET     /wps                        controllers.WPS.execute( version: String ?= "1.0.0", request: String, identifier: String ?= "", service: String ?= "cds2", responseform: String ?= "", storeexecuteresponse: Boolean ?= true, status: Boolean ?= false, datainputs: String ?= "" )
