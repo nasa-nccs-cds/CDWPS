@@ -10,7 +10,7 @@ class ObjectNotationParser extends JavaTokenParsers {
   def expr: Parser[Map[String, Seq[Map[String, Any]]]] = "[" ~> repsep(decl, ",") <~ "]" ^^ (Map() ++ _)
   def decl: Parser[(String, Seq[Map[String, Any]])] = key ~ "=" ~ objlist ^^ { case arg0 ~ "=" ~ arg1 => (normalize(arg0) -> arg1) }
   def key: Parser[String] = """[a-zA-Z_]\w*""".r
-  def integerNumber: Parser[String] = """[0-9]*""".r
+  def integerNumber: Parser[String] = """[+-]?(?<!\.)\b[0-9]+\b(?!\.[0-9])""".r
   def value: Parser[Any] = (
     stringLiteral
     | omap
@@ -43,14 +43,16 @@ object wpsObjectParser extends ObjectNotationParser {
           throw new BadRequestException(err.toString)
       }
     } catch {
-      case e: Exception => throw new BadRequestException(e.getMessage, e)
+      case e: Exception =>
+        logger.error("Error[%s] Parsing '%s': %s".format( e.getClass.getName, data_input, e.getMessage ) )
+        throw new BadRequestException(e.getMessage, e)
     }
   }
 }
 
 object parseTest extends App {
-  val data_input = "[domain={\"id\":\"d0\",\"level\":{\"start\":0,\"end\":1,\"system\":\"indices\"}},variable={\"dset\":\"MERRA/mon/atmos\",\"id\":\"v0:hur\",\"domain\":\"d0\"},operation=\"(v0,axis:xy)\"]"
-  val bad_data_input = "[domain={\"id\":\"d0\",\"level\":{\"start\":0,\"end\":1,\"system\":\"indices\"},variable={\"dset\":\"MERRA/mon/atmos\",\"id\":\"v0:hur\",\"domain\":\"d0\"},operation=\"(v0,axis:xy)\"]"
+  val data_input0 = """[domain=[{"name":"r0","longitude":{"start":-119.225,"end":-119.225,"system":"values"}}]]"""
+  val data_input = """[domain=[{"name":"r0","longitude":{"start":-119.225,"end":-119.225,"system":"values"}}]]"""
   try {
     val result = wpsObjectParser.parseDataInputs(data_input)
     println("Parse Result: " + result)
@@ -60,3 +62,5 @@ object parseTest extends App {
     }
   }
 }
+
+
