@@ -61,10 +61,20 @@ object cds2ServiceProvider extends ServiceProvider {
   val cds2ExecutionManager = new CDS2ExecutionManager( serverConfiguration )
 
   def serverConfiguration: Map[String,String] = {
-    val config = Play.current.configuration
-    def get_config_value( key: String ): Option[String] = { try { config.getString(key) } catch { case ex: Exception => None } }
-    val map_pairs = for( key<-config.keys; value=get_config_value(key); if value.isDefined ) yield ( key -> value.get.toString )
-    Map[String,String]( map_pairs.toSeq:_* )
+    try {
+      val config = Play.current.configuration
+      def get_config_value(key: String): Option[String] = {
+        try {
+          config.getString(key)
+        } catch {
+          case ex: Exception => None
+        }
+      }
+      val map_pairs = for (key <- config.keys; value = get_config_value(key); if value.isDefined) yield (key -> value.get.toString)
+      Map[String, String](map_pairs.toSeq: _*)
+    } catch {
+      case e: Exception => Map[String, String](  "wps.results.dir" -> "~/.wps/results" )
+    }
   }
   override def executeProcess(process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, String]): xml.Elem = {
     try {

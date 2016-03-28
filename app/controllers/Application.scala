@@ -56,7 +56,7 @@ class WPS extends Controller {
           val runargs = Map("responseform" -> responseform.toString, "storeexecuteresponse" -> storeexecuteresponse.toString, "async" -> status.toString)
           logger.info(s"WPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs")
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
-          val response = webProcessManager.executeProcess(service, identifier, parsed_data_inputs, runargs)
+          val response: xml.Elem = webProcessManager.executeProcess(service, identifier, parsed_data_inputs, runargs)
           logger.info( "Completed request '%s' in %.4f sec".format( identifier, (System.nanoTime()-t0)/1.0E9) )
           Ok(response).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
       }
@@ -65,6 +65,18 @@ class WPS extends Controller {
       case e: NotAcceptableException => NotAcceptable(<error type="UnacceptableRequest"> {"<![CDATA[\n " + e.getMessage + "\n]]>"} </error>).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
       case e: Exception => InternalServerError(<error type="InternalServerError"> {"<![CDATA[\n " + e.getMessage + "\n]]>"} </error>).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
     }
+  }
+}
+
+object executeTest extends App {
+  val identifier="CDS.workflow"
+  val service="cds2"
+  val runargs : Map[String,String] =Map( "responseform" -> "", "storeexecuteresponse" -> "true", "async" -> "false")
+  val datainputs = """[domain=[{"name":"r0","longitude":{"start":-124.925,"end":-124.925,"system":"values"},"latitude":{"start":-7.0854263305664205,"end":-7.0854263305664205,"system":"values"},"level":{"start":100000,"end":100000,"system":"values"}},{"name":"r1","time":{"start":"2010-01-16T12:00:00","end":"2010-01-16T12:00:00","system":"values"}}],variable={"uri":"collection://MERRA/mon/atmos","name":"ta:v0","domain":"r0"},operation=["CDS.anomaly(v0,axes:t)","CDS.bin(v0,axes:t,bins:t|month|ave|year)","CDS.subset(v0,domain:r1)"]]"""
+  val parsed_data_inputs = wpsObjectParser.parseDataInputs( datainputs )
+  val response: xml.Elem = webProcessManager.executeProcess( service, identifier, parsed_data_inputs, runargs )
+  for( node <- response.child ) {
+    println( node.label + " : " +  node.attributes.mkString(",") )
   }
 }
 
