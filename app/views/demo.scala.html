@@ -10,6 +10,14 @@
     <p CLASS="indented"><h3> <a href="http://localhost:9000/wps?service=cds2&request=describeprocess&identifier=CDS.average">
     <code> http://localhost:9000/wps?service=cds2&request=describeprocess&identifier=CDS.average </code> </a> </h3>
     <hr>
+    <h3> Execute: (list collections)</h3>
+    <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?request=Execute&service=cds2&identifier=CDS.metadata&datainputs=[]'>
+        <code>   http://localhost:9000/wps?request=Execute&service=cds2&identifier=CDS.metadata&datainputs=[] </code> </a> </h3>
+    <hr>
+    <h3> Execute: (variable metadata)</h3>
+    <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?request=Execute&service=cds2&identifier=CDS.metadata&datainputs=[variable={"uri":"collection://MERRA/mon/atmos","name":"ta"}]'>
+        <code>   http://localhost:9000/wps?request=Execute&service=cds2&identifier=CDS.metadata&datainputs=[variable={"uri":"collection://MERRA/mon/atmos","name":"ta"}] </code> </a> </h3>
+    <hr>
     <h3> Execute: (cache input fragment)</h3>
     <p CLASS="indented"><h3> <a href='http://localhost:9000/wps?request=Execute&service=cds2&identifier=util.cache&status=true&datainputs=[domain={"name":"d0","lev":{"start":3,"end":3,"system":"indices"}},variable={"uri":"collection://MERRA/mon/atmos","name":"ta:v0","domain":"d0"}]'>
         <code>   http://localhost:9000/wps?request=Execute&service=cds2&identifier=util.cache&status=true&datainputs=[domain={"name":"d0","lev":{"start":3,"end":3,"system":"indices"}},variable={"uri":"collection://MERRA/mon/atmos","name":"ta:v0","domain":"d0"}] </code> </a> </h3>
