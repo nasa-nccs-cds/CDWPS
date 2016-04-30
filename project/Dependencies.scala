@@ -16,12 +16,14 @@ object Library {
   val scalaxml       = "org.scala-lang.modules" %% "scala-xml"  % "1.0.3"
   val scalaparser    = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3"
   val cds2           = "nasa.nccs"         %% "cds2"       % "1.0-SNAPSHOT"
+  val scalactic      = "org.scalactic" %% "scalactic" % "2.2.6"
+  val scalatest      = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
 }
 
 object Dependencies {
   import Library._
 
-  val scala = Seq( logbackClassic, slf4jApi, scalaxml, scalaparser )
+  val scala = Seq( logbackClassic, slf4jApi, scalaxml, scalaparser, scalactic, scalatest )
 
   val CDS2 = Seq( cds2 )
 }

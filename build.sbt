@@ -13,15 +13,14 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 libraryDependencies ++= Seq( cache, ws, specs2 % Test )
 
+resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
+resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
+
 libraryDependencies += filters
-
 libraryDependencies ++= Dependencies.scala
-
 libraryDependencies ++= Dependencies.CDS2
 
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
-
-resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
 routesGenerator := InjectedRoutesGenerator
 
