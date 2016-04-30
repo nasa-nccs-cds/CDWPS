@@ -81,7 +81,7 @@ object cds2ServiceProvider extends ServiceProvider {
       cdsutils.time( logger, "-->> Process %s: Total Execution Time: ".format(process_name) ) {
         if( runargs.getOrElse("async","false").toBoolean ) {
           cds2ExecutionManager.executeAsync(TaskRequest(process_name, datainputs), runargs) match {
-            case ( resultId: String, futureResult: Future[ExecutionResults] ) => <result> {resultId} </result>
+            case ( resultId: String, futureResult: Future[ExecutionResults] ) => <result url={"http://server:port/wps/results?id=%s".format(resultId)}> {resultId} </result>
             case x =>  <error id="Execution Error"> {"Malformed response from cds2ExecutionManager" } </error>
           }
         }
