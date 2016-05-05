@@ -1,7 +1,7 @@
 import play.sbt.PlayImport._
 import play.sbt.routes.RoutesKeys._
 
-name := """BDWPS"""
+name := """CDWPS"""
 
 organization := "nccs"
 
