@@ -3,7 +3,7 @@ package servers
 import java.io.{PrintWriter, StringWriter}
 import java.util.concurrent.ExecutionException
 
-import nasa.nccs.cdapi.kernels.{BlockingExecutionResult, ErrorExecutionResult, ExecutionResults}
+import nasa.nccs.cdapi.kernels.{BlockingExecutionResult, ErrorExecutionResult, ExecutionResults, XmlExecutionResult}
 import nasa.nccs.esgf.engine.demoExecutionManager
 import nasa.nccs.utilities.cdsutils
 import org.slf4j.LoggerFactory
@@ -87,6 +87,7 @@ object cds2ServiceProvider extends ServiceProvider {
         }
         else  cds2ExecutionManager.blockingExecute(TaskRequest(process_name, datainputs), runargs).results.head match {
           case result: BlockingExecutionResult => result.toXml
+          case xml_result: XmlExecutionResult => xml_result.toXml
           case err: ErrorExecutionResult => fatal ( err.err )
         }
       }
