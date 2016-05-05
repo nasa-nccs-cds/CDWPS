@@ -3,7 +3,7 @@ package servers
 import java.io.{PrintWriter, StringWriter}
 import java.util.concurrent.ExecutionException
 
-import nasa.nccs.cdapi.kernels.ExecutionResults
+import nasa.nccs.cdapi.kernels.{BlockingExecutionResult, ErrorExecutionResult, ExecutionResults}
 import nasa.nccs.esgf.engine.demoExecutionManager
 import nasa.nccs.utilities.cdsutils
 import org.slf4j.LoggerFactory
@@ -22,13 +22,13 @@ abstract class ServiceProvider {
 
   def describeProcess( identifier: String ): xml.Elem
 
-  def getCause( e: Exception ): Throwable = e match {
+  def getCause( e: Throwable ): Throwable = e match {
     case err: ExecutionException => err.getCause; case x => e
   }
 
   def getResultFilePath( resultId: String ): Option[String]
 
-  def fatal( e: Exception ): xml.Elem = {
+  def fatal( e: Throwable ): xml.Elem = {
     val err = getCause( e )
     logger.error( "\nError Executing Kernel: %s\n".format(err.getMessage) )
     val sw = new StringWriter
@@ -85,7 +85,10 @@ object cds2ServiceProvider extends ServiceProvider {
             case x =>  <error id="Execution Error"> {"Malformed response from cds2ExecutionManager" } </error>
           }
         }
-        else  cds2ExecutionManager.blockingExecute(TaskRequest(process_name, datainputs), runargs)
+        else  cds2ExecutionManager.blockingExecute(TaskRequest(process_name, datainputs), runargs).results.head match {
+          case result: BlockingExecutionResult => result.toXml
+          case err: ErrorExecutionResult => fatal ( err.err )
+        }
       }
     } catch { case e: Exception => fatal(e) }
   }

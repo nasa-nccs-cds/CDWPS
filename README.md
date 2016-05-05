@@ -1,6 +1,6 @@
 ###                                BDWPS Project
 
-_WPS implementation built on scala/play, designed to interface to big data frameworks such as Spark, Akka, etc. Includes a plugin interface to implement various service APIs.  Distributed with a plugin (https://github.com/nasa-nccs-cds/esgfWpsApi) implementing the ESGF-CWT climate data services api._
+_WPS implementation built on scala/play, designed to interface to big data frameworks such as Spark, Akka, etc. Includes a plugin interface to implement various service APIs.  Distributed with a plugin (https://github.com/nasa-nccs-cds/CDAPI) implementing the ESGF-CWT climate data services api._
 
 ####  Prerequisite: Install the Scala develpment tools:
 
@@ -10,7 +10,7 @@ _WPS implementation built on scala/play, designed to interface to big data frame
     2) Scala Build Tool (sbt):    http://www.scala-sbt.org/0.13/docs/Setup.html
                         
 
-####  Install and run BDWPS:
+####  Install and run CDWPS:
 
     0) Install dependent projects (this step will become unnecessary when the NASA Maven server is up and running):
     
@@ -18,8 +18,8 @@ _WPS implementation built on scala/play, designed to interface to big data frame
         >> cd CDAPI; sbt publish-local
         >> git clone https://github.com/nasa-nccs-cds/KernelModuleTemplate.git
         >> cd KernelModuleTemplate; sbt publish-local
-        >> git clone https://github.com/nasa-nccs-cds/CDS2.git
-        >> cd CDS2; sbt publish-local
+        >> git clone https://github.com/nasa-nccs-cds/CDAS2.git
+        >> cd CDAS2; sbt publish-local
         
     1) Optional Dependencies
     
@@ -28,13 +28,13 @@ _WPS implementation built on scala/play, designed to interface to big data frame
             a) Use a package manager, see: http://www.unidata.ucar.edu/software/netcdf/docs/getting_and_building_netcdf.html
             b) Install UVCDAT, see: https://github.com/UV-CDAT/uvcdat/wiki/install.  In this case one will need to execute the UVCDAT 'setup_runtime.sh' script before starting the server.
 
-    2) Checkout the BDWPS sources:
+    2) Checkout the CDWPS sources:
 
-        >> git clone https://github.com/nasa-nccs-cds/BDWPS.git
+        >> git clone https://github.com/nasa-nccs-cds/CDWPS.git
 
     3) Build and run the application:
 
-        >> cd BDWPS
+        >> cd CDWPS
         >> sbt run
 
      4) Access demos:
@@ -46,9 +46,9 @@ _WPS implementation built on scala/play, designed to interface to big data frame
 
     1) Install IntelliJ IDEA CE from https://www.jetbrains.com/idea/download/ with Scala plugin enabled.
     
-    2) Start IDEA and import the BDWPS Project from Version Control (github) using the address https://github.com/nasa-nccs-cds/BDWPS.git.
+    2) Start IDEA and import the CDWPS Project from Version Control (github) using the address https://github.com/nasa-nccs-cds/CDWPS.git.
     
-    3) Service provider/api plugin development: See https://github.com/nasa-nccs-cds/esgfWpsApi
+    3) Service provider/api plugin development: See https://github.com/nasa-nccs-cds/CDAPI and https://github.com/nasa-nccs-cds/KernelModuleTemplate.git
 
     
 
