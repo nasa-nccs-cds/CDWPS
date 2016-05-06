@@ -15,7 +15,7 @@ object Library {
   val slf4jApi       = "org.slf4j"         %  "slf4j-api"       % Version.slf4j
   val scalaxml       = "org.scala-lang.modules" %% "scala-xml"  % "1.0.3"
   val scalaparser    = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3"
-  val cds2           = "nasa.nccs"         %% "cds2"       % "1.0-SNAPSHOT"
+  val cds2           = "nasa.nccs"         %% "cdas2"       % "1.0-SNAPSHOT"
   val scalactic      = "org.scalactic" %% "scalactic" % "2.2.6"
   val scalatest      = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
 }
