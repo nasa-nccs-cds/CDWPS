@@ -85,11 +85,7 @@ object cds2ServiceProvider extends ServiceProvider {
             case x =>  <error id="Execution Error"> {"Malformed response from cds2ExecutionManager" } </error>
           }
         }
-        else  cds2ExecutionManager.blockingExecute(TaskRequest(process_name, datainputs), runargs).results.head match {
-          case result: BlockingExecutionResult => result.toXml
-          case xml_result: XmlExecutionResult => xml_result.toXml
-          case err: ErrorExecutionResult => fatal ( err.err )
-        }
+        else  cds2ExecutionManager.blockingExecute(TaskRequest(process_name, datainputs), runargs).toXml
       }
     } catch { case e: Exception => fatal(e) }
   }
