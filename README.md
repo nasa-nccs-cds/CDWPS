@@ -23,10 +23,14 @@ _WPS implementation built on scala/play, designed to interface to big data frame
         
     1) Optional Dependencies
     
-        Executing async requests requires that the NetCDF C library be installed on the server.  The best ways to accopmplish this are:
+        Executing async requests requires that the NetCDF C library be installed on the server.  
+        The best ways to accopmplish this are:
         
-            a) Use a package manager, see: http://www.unidata.ucar.edu/software/netcdf/docs/getting_and_building_netcdf.html
-            b) Install UVCDAT, see: https://github.com/UV-CDAT/uvcdat/wiki/install.  In this case one will need to execute the UVCDAT 'setup_runtime.sh' script before starting the server.
+            a) Install using a package manager:
+                    See: http://www.unidata.ucar.edu/software/netcdf/docs/getting_and_building_netcdf.html
+                    
+            b) Install UVCDAT, see: https://github.com/UV-CDAT/uvcdat/wiki/install.  
+                    In this case one will need to execute the UVCDAT 'setup_runtime.sh' script before starting the server.
 
     2) Checkout the CDWPS sources:
 
