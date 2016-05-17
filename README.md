@@ -14,10 +14,6 @@ _WPS implementation built on scala/play, designed to interface to big data frame
 
     0) Install dependent projects (this step will become unnecessary when the NASA Maven server is up and running):
     
-        >> git clone https://github.com/nasa-nccs-cds/CDAPI.git
-        >> cd CDAPI; sbt publish-local
-        >> git clone https://github.com/nasa-nccs-cds/KernelModuleTemplate.git
-        >> cd KernelModuleTemplate; sbt publish-local
         >> git clone https://github.com/nasa-nccs-cds/CDAS2.git
         >> cd CDAS2; sbt publish-local
         
