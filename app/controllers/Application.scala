@@ -82,4 +82,10 @@ object executeTest extends App {
   }
 }
 
+object parseTest  extends App {
+  val datainputs = """ [domain=[{"name":"d0","lat":{"start":45,"end":45,"system":"values"},"lon":{"start":30,"end":30,"system":"values"},"lev":{"start":3,"end":3,"system":"indices"}}],variable={"uri":"collection://MERRA/mon/atmos","name":"ta:v0","domain":"d0"},operation=[{ "input":["v0"], "unit":"month", "period":"12" }]  ] """
+  val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
+  println( parsed_data_inputs )
+}
+
 

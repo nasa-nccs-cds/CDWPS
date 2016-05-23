@@ -14,13 +14,15 @@ class ObjectNotationParser extends JavaTokenParsers {
   def value: Parser[Any] = (
     stringLiteral
     | omap
+    | slist
     | integerNumber ^^ (_.toInt)
     | floatingPointNumber ^^ (_.toFloat)
     | "true" ^^ (x => true)
     | "false" ^^ (x => false)
   )
-  def member: Parser[(String, Any)] = stringLiteral ~ ":" ~ value ^^ { case x ~ ":" ~ y => (normalize(x), y) }
+  def member:  Parser[(String, Any)] = stringLiteral ~ ":" ~ value ^^ { case x ~ ":" ~ y => (normalize(x), y) }
   def omap: Parser[Map[String, Any]] = "{" ~> repsep(member, ",") <~ "}" ^^ (Map() ++ _)
+  def slist: Parser[List[String]] = "[" ~> repsep( stringLiteral | integerNumber | floatingPointNumber, ",") <~ "]" ^^ (List() ++ _)
   def obj: Parser[Map[String, Any]] = omap | unparsed
   def unparsed: Parser[Map[String, Any]] = stringLiteral ^^ { case x: Any => Map[String, Any](("unparsed" -> x)) }
   def objlist: Parser[Seq[Map[String, Any]]] = "[" ~> repsep(obj, ",") <~ "]" | obj ^^ (List(_))
