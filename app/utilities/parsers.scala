@@ -12,9 +12,9 @@ class ObjectNotationParser extends JavaTokenParsers {
   def key: Parser[String] = """[a-zA-Z_]\w*""".r
   def integerNumber: Parser[String] = """[+-]?(?<!\.)\b[0-9]+\b(?!\.[0-9])""".r
   def value: Parser[Any] = (
-    stringLiteral
+    stringLiteral ^^ (_.stripPrefix(""""""").stripSuffix("""""""))
     | omap
-    | slist
+    | slist ^^ ( _.map( _.stripPrefix(""""""").stripSuffix(""""""")) )
     | integerNumber ^^ (_.toInt)
     | floatingPointNumber ^^ (_.toFloat)
     | "true" ^^ (x => true)
@@ -22,10 +22,8 @@ class ObjectNotationParser extends JavaTokenParsers {
   )
   def member:  Parser[(String, Any)] = stringLiteral ~ ":" ~ value ^^ { case x ~ ":" ~ y => (normalize(x), y) }
   def omap: Parser[Map[String, Any]] = "{" ~> repsep(member, ",") <~ "}" ^^ (Map() ++ _)
-  def slist: Parser[List[String]] = "[" ~> repsep( stringLiteral | integerNumber | floatingPointNumber, ",") <~ "]" ^^ (List() ++ _)
-  def obj: Parser[Map[String, Any]] = omap | unparsed
-  def unparsed: Parser[Map[String, Any]] = stringLiteral ^^ { case x: Any => Map[String, Any](("unparsed" -> x)) }
-  def objlist: Parser[Seq[Map[String, Any]]] = "[" ~> repsep(obj, ",") <~ "]" | obj ^^ (List(_))
+  def slist: Parser[List[String]] = "[" ~> repsep( stringLiteral | integerNumber | floatingPointNumber, ",") <~ "]" ^^ (List[String]() ++ _ )
+  def objlist: Parser[Seq[Map[String, Any]]] = "[" ~> repsep(omap, ",") <~ "]" | omap ^^ (List(_))
 }
 
 object wpsObjectParser extends ObjectNotationParser {
@@ -35,6 +33,7 @@ object wpsObjectParser extends ObjectNotationParser {
 
   def parseDataInputs(data_input: String): Map[String, Seq[Map[String, Any]]] = {
     try {
+      if( data_input contains "]]>" ) { throw new SecurityException(" Request contains illegal string ']]>' ")}
       parseAll(expr, data_input) match {
         case result: Success[_] => result.get.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
         case err: Error =>
