@@ -26,6 +26,13 @@ class ObjectNotationParser extends JavaTokenParsers {
   def objlist: Parser[Seq[Map[String, Any]]] = "[" ~> repsep(omap, ",") <~ "]" | omap ^^ (List(_))
 }
 
+object CDSecurity {
+  def sanitize( str_data: String ): String = {
+    if (str_data contains "]]>") throw new SecurityException(" Request contains illegal CDATA breakout string")
+    str_data
+  }
+}
+
 object wpsObjectParser extends ObjectNotationParser {
   val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -33,7 +40,7 @@ object wpsObjectParser extends ObjectNotationParser {
 
   def parseDataInputs(data_input: String): Map[String, Seq[Map[String, Any]]] = {
     try {
-      if( data_input contains "]]>" ) { throw new SecurityException(" Request contains illegal string ']]>' ")}
+      CDSecurity.sanitize( data_input )
       parseAll(expr, data_input) match {
         case result: Success[_] => result.get.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
         case err: Error =>
