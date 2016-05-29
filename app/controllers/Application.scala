@@ -7,7 +7,7 @@ import play.api.Play
 import play.api.mvc._
 import process.webProcessManager
 import process.exceptions._
-import utilities.parsers.{ wpsObjectParser, BadRequestException }
+import utilities.parsers.{CDSecurity, wpsObjectParser, BadRequestException}
 
 class Application extends Controller {
 
@@ -63,10 +63,13 @@ class WPS extends Controller {
           Ok(response).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
       }
     } catch {
-      case e: BadRequestException => BadRequest(<error type="ImproperlyFormedRequest"> {"<![CDATA[\n " + e.getMessage + "\n]]>"} </error>).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
-      case e: NotAcceptableException => NotAcceptable(<error type="UnacceptableRequest"> {"<![CDATA[\n " + e.getMessage + "\n]]>"} </error>).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
-      case e: Exception => InternalServerError(<error type="InternalServerError"> {"<![CDATA[\n " + e.getMessage + "\n]]>"} </error>).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
+      case e: BadRequestException => BadRequest(<error type="ImproperlyFormedRequest"> {"<![CDATA[\n " + CDSecurity.sanitize( e.getMessage ) + "\n]]>"} </error>).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
+      case e: NotAcceptableException => NotAcceptable(<error type="UnacceptableRequest"> {"<![CDATA[\n " + CDSecurity.sanitize( e.getMessage ) + "\n]]>"} </error>).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
+      case e: Exception => InternalServerError(<error type="InternalServerError"> {"<![CDATA[\n " + CDSecurity.sanitize( e.getMessage ) + "\n]]>"} </error>).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
     }
+  }
+  def sanitize( msg: String ) = {
+
   }
 }
 
