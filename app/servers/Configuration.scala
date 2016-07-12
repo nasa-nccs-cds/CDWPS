@@ -18,9 +18,11 @@ abstract class ServiceProvider {
 
   def executeProcess(identifier: String, parsed_data_inputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, String]): xml.Elem
 
-  def listProcesses(): xml.Elem
+//  def listProcesses(): xml.Elem
 
   def describeProcess( identifier: String ): xml.Elem
+
+  def getCapabilities( identifier: String ): xml.Elem
 
   def getCause( e: Throwable ): Throwable = e match {
     case err: ExecutionException => err.getCause; case x => e
@@ -48,7 +50,7 @@ object esgfServiceProvider extends ServiceProvider {
   override def describeProcess(process_name: String): xml.Elem = {
     try {  demoExecutionManager.describeProcess(process_name) } catch {  case e: Exception => <error id="Execution Error"> {e.getMessage} </error> }
   }
-  override def listProcesses(): xml.Elem = {
+  override def getCapabilities(identifier: String): xml.Elem = {
     try {  demoExecutionManager.listProcesses() } catch {  case e: Exception => <error id="Execution Error"> {e.getMessage} </error> }
   }
   override def getResultFilePath( resultId: String ): Option[String] = None
@@ -80,7 +82,7 @@ object cds2ServiceProvider extends ServiceProvider {
     try {
       cdsutils.time( logger, "-->> Process %s: Total Execution Time: ".format(process_name) ) {
         if( runargs.getOrElse("async","false").toBoolean ) {
-          cds2ExecutionManager.executeAsync(TaskRequest(process_name, datainputs), runargs) match {
+          cds2ExecutionManager.asyncExecute(TaskRequest(process_name, datainputs), runargs) match {
             case ( resultId: String, futureResult: Future[ExecutionResults] ) => <result url={"http://server:port/wps/results?id=%s".format(resultId)}> {resultId} </result>
             case x =>  <error id="Execution Error"> {"Malformed response from cds2ExecutionManager" } </error>
           }
@@ -95,30 +97,13 @@ object cds2ServiceProvider extends ServiceProvider {
 
     } catch { case e: Exception => fatal(e) }
   }
-  override def listProcesses(): xml.Elem = {
+  override def getCapabilities(identifier: String): xml.Elem = {
     try {
-      cds2ExecutionManager.listProcesses()
+      cds2ExecutionManager.getCapabilities( if(identifier == null) "" else identifier )
 
     } catch { case e: Exception => fatal(e) }
   }
   override def getResultFilePath( resultId: String ): Option[String] = cds2ExecutionManager.getResultFilePath( resultId )
-}
-
-object demoServiceProvider extends ServiceProvider {
-
-  override def executeProcess(identifier: String, parsed_data_inputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, String]): xml.Elem = {
-    <result id={ identifier }>
-      <inputs>  { cdata(parsed_data_inputs) } </inputs>
-      <runargs> { cdata(runargs) } </runargs>
-    </result>
-  }
-  override def describeProcess(identifier: String): xml.Elem = {
-    <process id={ identifier }></process>
-  }
-  override def listProcesses(): xml.Elem = {
-    <processes></processes>
-  }
-  override def getResultFilePath( resultId: String ): Option[String] = None
 }
 
 object ServiceProviderConfiguration {
@@ -126,10 +111,19 @@ object ServiceProviderConfiguration {
   val providers = Seq(
     "esgf" -> esgfServiceProvider,
     "cds2" -> cds2ServiceProvider,
-    "demo" -> demoServiceProvider,
     "test" -> esgfServiceProvider
   )
 
   val default_service = "esgf"
 
+}
+
+object resourceTest extends App {
+  import nasa.nccs.cds2.engine.CDS2ExecutionManager
+  val serverConfiguration: Map[String,String] = Map()
+
+  val cds2ExecutionManager = new CDS2ExecutionManager( serverConfiguration )
+
+  val resourcePath = cds2ExecutionManager.getResourcePath("/collections.xml")
+  println( resourcePath )
 }

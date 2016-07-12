@@ -9,6 +9,9 @@ object Version {
 }
 
 object Library {
+  val cdm            = "edu.ucar"           % "cdm"             % "4.6.6"
+  val clcommon       = "edu.ucar"           % "clcommon"        % "4.6.6"
+  val netcdf4        = "edu.ucar"           % "netcdf4"         % "4.6.6"
   val logbackClassic = "ch.qos.logback"    %  "logback-classic" % Version.logback
   val mockitoAll     = "org.mockito"       %  "mockito-all"     % Version.mockito
   val scalaTest      = "org.scalatest"     %% "scalatest"       % Version.scalaTest
@@ -26,4 +29,6 @@ object Dependencies {
   val scala = Seq( logbackClassic, slf4jApi, scalaxml, scalaparser, scalactic, scalatest )
 
   val CDS2 = Seq( cds2 )
+
+  val netcdf = Seq( cdm, clcommon, netcdf4 )
 }

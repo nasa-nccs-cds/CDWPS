@@ -48,7 +48,7 @@ class WPS extends Controller {
     try {
       request.toLowerCase match {
         case "getcapabilities" =>
-          Ok(webProcessManager.listProcesses(service)).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
+          Ok(webProcessManager.getCapabilities(service, identifier)).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
         case "describeprocess" =>
           Ok(webProcessManager.describeProcess(service, identifier)).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
         case "execute" =>
