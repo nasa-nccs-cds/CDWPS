@@ -26,9 +26,7 @@ routesGenerator := InjectedRoutesGenerator
 
 fork in run:= true
 
-javaOptions in run ++= Seq( "-Xmx4G", "-Xms512M")
-
-javaOptions in run ++= Seq( "-Xmx1.5G", "-Xms512M")
+javaOptions in run ++= Seq( "-Xmx4G" )
 
 import java.util.Properties
 
