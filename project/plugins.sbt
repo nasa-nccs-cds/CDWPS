@@ -20,3 +20,4 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-mocha" % "1.1.0")
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "0.8.5")
 
 
+
