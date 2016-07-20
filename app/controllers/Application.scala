@@ -73,14 +73,16 @@ class WPS extends Controller {
 object executeTest extends App {
   val identifier="CDS.workflow"
   val service="cds2"
-  val runargs : Map[String,String] =Map( "responseform" -> "", "storeexecuteresponse" -> "true", "async" -> "false")
-  val datainputs = """[domain=[{"name":"r0","longitude":{"start":-124.925,"end":-124.925,"system":"values"},"latitude":{"start":-7.0854263305664205,"end":-7.0854263305664205,"system":"values"},"level":{"start":100000,"end":100000,"system":"values"}},{"name":"r1","time":{"start":"2010-01-16T12:00:00","end":"2010-01-16T12:00:00","system":"values"}}],variable={"uri":"collection://MERRA/mon/atmos","name":"ta:v0","domain":"r0"},operation=["CDS.anomaly(v0,axes:t)","CDS.bin(v0,axes:t,bins:t|month|ave|year)","CDS.subset(v0,domain:r1)"]]"""
+  val runargs : Map[String,String] =Map( "responseform" -> "", "storeexecuteresponse" -> "true", "async" -> "true")
+  val datainputs = """[domain=[{"name":"d1","lev":{"start":0,"end":0,"system":"indices"}}],variable=[{"uri":"collection:/merra/2005","name":"t:v1","domain":"d1"}],operation=[{"name":"CDS.max","input":"v1"}]]"""
   val parsed_data_inputs = wpsObjectParser.parseDataInputs( datainputs )
   val response: xml.Elem = webProcessManager.executeProcess( service, identifier, parsed_data_inputs, runargs )
   for( node <- response.child ) {
     println( node.label + " : " +  node.attributes.mkString(",") )
   }
 }
+
+
 
 object parseTest  extends App {
   val datainputs = """ [domain=[{"name":"d0","lat":{"start":45,"end":45,"system":"values"},"lon":{"start":30,"end":30,"system":"values"},"lev":{"start":3,"end":3,"system":"indices"}}],variable={"uri":"collection://MERRA/mon/atmos","name":"ta:v0","domain":"d0"},operation=[{ "input":["v0"], "unit":"month", "period":"12" }]  ] """
