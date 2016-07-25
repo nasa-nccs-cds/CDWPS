@@ -7,9 +7,10 @@ class BadRequestException(message: String = null, cause: Throwable = null) exten
 
 class ObjectNotationParser extends JavaTokenParsers {
   def normalize(sval: String): String = sval.stripPrefix("\"").stripSuffix("\"").toLowerCase
-  def expr: Parser[Map[String, Seq[Map[String, Any]]]] = "[" ~> repsep(decl, ",") <~ "]" ^^ (Map() ++ _)
+  def expr: Parser[Map[String, Seq[Map[String, Any]]]] = "[" ~> repsep(decl,sep) <~ "]" ^^ (Map() ++ _)
   def decl: Parser[(String, Seq[Map[String, Any]])] = key ~ "=" ~ objlist ^^ { case arg0 ~ "=" ~ arg1 => (normalize(arg0) -> arg1) }
   def key: Parser[String] = """[a-zA-Z_]\w*""".r
+  def sep: Parser[String] = """[,;]""".r
   def integerNumber: Parser[String] = """[+-]?(?<!\.)\b[0-9]+\b(?!\.[0-9])""".r
   def value: Parser[Any] = (
     stringLiteral ^^ (_.stripPrefix(""""""").stripSuffix("""""""))
@@ -21,9 +22,9 @@ class ObjectNotationParser extends JavaTokenParsers {
     | "false" ^^ (x => false)
   )
   def member:  Parser[(String, Any)] = stringLiteral ~ ":" ~ value ^^ { case x ~ ":" ~ y => (normalize(x), y) }
-  def omap: Parser[Map[String, Any]] = "{" ~> repsep(member, ",") <~ "}" ^^ (Map() ++ _)
-  def slist: Parser[List[String]] = "[" ~> repsep( stringLiteral | integerNumber | floatingPointNumber, ",") <~ "]" ^^ (List[String]() ++ _ )
-  def objlist: Parser[Seq[Map[String, Any]]] = "[" ~> repsep(omap, ",") <~ "]" | omap ^^ (List(_))
+  def omap: Parser[Map[String, Any]] = "{" ~> repsep(member,sep) <~ "}" ^^ (Map() ++ _)
+  def slist: Parser[List[String]] = "[" ~> repsep( stringLiteral | integerNumber | floatingPointNumber, sep ) <~ "]" ^^ (List[String]() ++ _ )
+  def objlist: Parser[Seq[Map[String, Any]]] = "[" ~> repsep(omap,sep) <~ "]" | omap ^^ (List(_))
 }
 
 object CDSecurity {
@@ -60,7 +61,7 @@ object wpsObjectParser extends ObjectNotationParser {
 
 object parseTest extends App {
   val data_input0 = """[domain=[{"name":"r0","longitude":{"start":-119.225,"end":-119.225,"system":"values"}}]]"""
-  val data_input = """[domain=[{"name":"r0","longitude":{"start":-119.225,"end":-119.225,"system":"values"}}]]"""
+  val data_input = """[variable=[{"uri":"","name":"cds.average(v1;axes=xy)-07.24-05.29.11:cds.average(v1;axes=xy)-07.24-05.29.11","domain":""}]]"""
   try {
     val result = wpsObjectParser.parseDataInputs(data_input)
     println("Parse Result: " + result)
