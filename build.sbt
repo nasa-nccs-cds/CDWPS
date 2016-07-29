@@ -15,6 +15,7 @@ libraryDependencies ++= Seq( cache, ws, specs2 % Test )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
+resolvers += "Local Repository" at "~tpmaxwel/.ivy"
 
 libraryDependencies += filters
 libraryDependencies ++= Dependencies.scala
