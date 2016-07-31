@@ -41,12 +41,23 @@ cdasProperties := {
   prop
 }
 
+resolvers += Resolver.file("Local CDAS repo", getPublishDir( cdasProperties.value ) )
+
 def getCacheDir( properties: Properties ): File =
   sys.env.get("CDAS_CACHE_DIR") match {
     case Some(cache_dir) => file(cache_dir)
     case None =>
       val home = file(System.getProperty("user.home"))
       val cache_dir = properties.getProperty("cdas.cache.dir", "")
+      if (cache_dir.isEmpty) { home / ".cdas" / "cache" } else file( cache_dir )
+  }
+
+def getPublishDir( properties: Properties ): File =
+  sys.env.get("SBT_PUBLISH_DIR") match {
+    case Some(cache_dir) => file(cache_dir)
+    case None =>
+      val home = file(System.getProperty("user.home"))
+      val cache_dir = properties.getProperty("cdas.publish.dir", "")
       if (cache_dir.isEmpty) { home / ".cdas" / "cache" } else file( cache_dir )
   }
 
