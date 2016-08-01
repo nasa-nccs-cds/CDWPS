@@ -15,7 +15,7 @@ libraryDependencies ++= Seq( cache, ws, specs2 % Test )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
-resolvers += "Local Repository" at "~tpmaxwel/.ivy"
+resolvers += "Local CDAS Repository" at "file:///" + getPublishDir( cdasProperties.value ).toString
 
 libraryDependencies += filters
 libraryDependencies ++= Dependencies.scala
@@ -41,8 +41,6 @@ cdasProperties := {
   try{ IO.load( prop, cdasPropertiesFile.value ) } catch { case err: Exception => println("No properties file found") }
   prop
 }
-
-resolvers += "Local CDAS Repository" at "file:///" + getPublishDir( cdasProperties.value ).toString
 
 def getCacheDir( properties: Properties ): File =
   sys.env.get("CDAS_CACHE_DIR") match {
