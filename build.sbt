@@ -42,7 +42,7 @@ cdasProperties := {
   prop
 }
 
-resolvers += Resolver.file("Local CDAS repo", getPublishDir( cdasProperties.value ) )
+resolvers += "Local CDAS Repository" at "file:///" + getPublishDir( cdasProperties.value ).toString
 
 def getCacheDir( properties: Properties ): File =
   sys.env.get("CDAS_CACHE_DIR") match {
