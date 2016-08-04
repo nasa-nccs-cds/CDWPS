@@ -26,7 +26,7 @@ ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 routesGenerator := InjectedRoutesGenerator
 
 fork in run:= true
-javaOptions in run ++= Seq( "-Xmx16000M", "-Xms512M", "-Xss1M", "-XX:+CMSClassUnloadingEnabled", "-XX:+UseConcMarkSweepGC", "-XX:MaxPermSize=800M" )
+javaOptions in run ++= Seq( "-Xmx32000M", "-Xms512M", "-Xss1M", "-XX:+CMSClassUnloadingEnabled", "-XX:+UseConcMarkSweepGC", "-XX:MaxPermSize=800M" )
 
 import java.util.Properties
 
