@@ -6,7 +6,7 @@ class APIManager(val providers: Map[String, ServiceProvider], default_service: S
 
   def getServiceProvider(service: String = ""): Option[ServiceProvider] = {
     def actual_service = if (service == "") default_service else service
-    logger.info( " Executing WPS service " +  service )
+//    logger.info( " Executing WPS service " +  service )
     providers.get(actual_service)
   }
 }

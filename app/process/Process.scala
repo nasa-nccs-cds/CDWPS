@@ -62,7 +62,7 @@ class ProcessManager() {
   def describeProcess(service: String, name: String): xml.Elem = {
     apiManager.getServiceProvider(service) match {
       case Some(serviceProvider) =>
-        logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
+//        logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
         serviceProvider.describeProcess( name )
       case None =>
         throw new NotAcceptableException("Unrecognized service: " + service)
@@ -72,7 +72,7 @@ class ProcessManager() {
   def getCapabilities(service: String, identifier: String): xml.Elem = {
     apiManager.getServiceProvider(service) match {
       case Some(serviceProvider) =>
-        logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
+//        logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
         serviceProvider.getCapabilities( identifier )
       case None =>
         throw new NotAcceptableException("Unrecognized service: " + service)
@@ -92,7 +92,7 @@ class ProcessManager() {
   def executeProcess(service: String, process_name: String, datainputs: Map[String, Seq[Map[String, Any]]], runargs: Map[String, String]): xml.Elem = {
     apiManager.getServiceProvider(service) match {
       case Some(serviceProvider) =>
-        logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
+//        logger.info("Executing Service %s, Service provider = %s ".format( service, serviceProvider.getClass.getName ))
         serviceProvider.executeProcess(process_name, datainputs, runargs)
       case None => throw new NotAcceptableException("Unrecognized service: " + service)
     }
