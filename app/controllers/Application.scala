@@ -5,9 +5,7 @@ import play.api._
 import java.io.File
 import play.api.Play
 import play.api.mvc._
-import process.webProcessManager
-import process.exceptions._
-import utilities.parsers.{CDSecurity, wpsObjectParser, BadRequestException}
+import nasa.nccs.esgf.wps.{ CDSecurity, wpsObjectParser, BadRequestException, ProcessManager, NotAcceptableException }
 
 class Application extends Controller {
 
@@ -21,6 +19,24 @@ class Application extends Controller {
 
 class WPS extends Controller {
   val logger = LoggerFactory.getLogger(this.getClass)
+  val webProcessManager = new ProcessManager( serverConfiguration )
+
+  def serverConfiguration: Map[String,String] = {
+    try {
+      val config = Play.current.configuration
+      def get_config_value(key: String): Option[String] = {
+        try {
+          config.getString(key)
+        } catch {
+          case ex: Exception => None
+        }
+      }
+      val map_pairs = for (key <- config.keys; value = get_config_value(key); if value.isDefined) yield (key -> value.get.toString)
+      Map[String, String](map_pairs.toSeq: _*)
+    } catch {
+      case e: Exception => Map[String, String](  "wps.results.dir" -> "~/.wps/results" )
+    }
+  }
 
   def demo = Action {
     Ok(views.html.demo())
@@ -67,18 +83,6 @@ class WPS extends Controller {
       case e: NotAcceptableException => NotAcceptable(<error type="UnacceptableRequest"> {"<![CDATA[\n " + CDSecurity.sanitize( e.getMessage ) + "\n]]>"} </error>).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
       case e: Exception => InternalServerError(<error type="InternalServerError"> {"<![CDATA[\n " + CDSecurity.sanitize( e.getMessage ) + "\n]]>"} </error>).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
     }
-  }
-}
-
-object executeTest extends App {
-  val identifier="CDS.workflow"
-  val service="cds2"
-  val runargs : Map[String,String] =Map( "responseform" -> "", "storeexecuteresponse" -> "true", "async" -> "true")
-  val datainputs = """[domain=[{"name":"d1","lev":{"start":0,"end":0,"system":"indices"}}],variable=[{"uri":"collection:/merra/2005","name":"t:v1","domain":"d1"}],operation=[{"name":"CDS.max","input":"v1"}]]"""
-  val parsed_data_inputs = wpsObjectParser.parseDataInputs( datainputs )
-  val response: xml.Elem = webProcessManager.executeProcess( service, identifier, parsed_data_inputs, runargs )
-  for( node <- response.child ) {
-    println( node.label + " : " +  node.attributes.mkString(",") )
   }
 }
 
