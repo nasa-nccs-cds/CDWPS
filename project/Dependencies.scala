@@ -19,8 +19,8 @@ object Library {
   val scalaxml       = "org.scala-lang.modules" %% "scala-xml"  % "1.0.3"
   val scalaparser    = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.3"
   val cds2           = "nasa.nccs"         %% "cdas2"       % "1.2-SNAPSHOT"
-  val scalactic      = "org.scalactic" %% "scalactic" % "2.2.6"
-  val scalatest      = "org.scalatest" %% "scalatest" % "2.2.6" % "test"
+  val scalactic      = "org.scalactic" %% "scalactic" % "3.0.0"
+  val scalatest      = "org.scalatest" %% "scalatest" % "3.0.0" % "test"
 }
 
 object Dependencies {
