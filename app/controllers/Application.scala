@@ -70,7 +70,7 @@ class WPS extends Controller {
         case "execute" =>
           val t0 = System.nanoTime()
           val runargs = Map("responseform" -> responseform.toString, "storeexecuteresponse" -> storeexecuteresponse.toString, "async" -> status.toString)
-          logger.info(s"WPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs")
+          logger.info(s"\n\nWPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val response: xml.Elem = webProcessManager.executeProcess(service, identifier, parsed_data_inputs, runargs)
           logger.info( "Completed request '%s' in %.4f sec".format( identifier, (System.nanoTime()-t0)/1.0E9) )
