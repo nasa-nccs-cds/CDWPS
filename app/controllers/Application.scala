@@ -12,6 +12,10 @@ class Application extends Controller {
   def test = Action {
     Ok("Hello").withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
   }
+
+  def demo = Action {
+    Ok(views.html.demo())
+  }
 }
 
 class WPS extends Controller {

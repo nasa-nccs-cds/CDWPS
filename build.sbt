@@ -21,6 +21,10 @@ libraryDependencies += filters
 libraryDependencies ++= Dependencies.scala
 libraryDependencies ++= Dependencies.CDS2
 
+dependencyOverrides ++= Set(
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4"
+)
+
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
 routesGenerator := InjectedRoutesGenerator

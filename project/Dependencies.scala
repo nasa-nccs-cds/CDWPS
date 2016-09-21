@@ -6,7 +6,6 @@ object Version {
   val scala     = "2.11.7"
   val scalaTest = "2.2.4"
   val slf4j     = "1.7.6"
-  val spark     =  "1.5.2" //  "1.4.1"
 }
 
 object Library {
@@ -22,7 +21,6 @@ object Library {
   val cds2           = "nasa.nccs"         %% "cdas2"       % "1.2-SNAPSHOT"
   val scalactic      = "org.scalactic" %% "scalactic" % "3.0.0"
   val scalatest      = "org.scalatest" %% "scalatest" % "3.0.0" % "test"
-  val sparkSQL       = "org.apache.spark"  %% "spark-sql" % Version.spark
 }
 
 object Dependencies {
@@ -34,5 +32,4 @@ object Dependencies {
 
   val netcdf = Seq( cdm, clcommon, netcdf4 )
 
-  val spark = Seq( sparkSQL )
 }
