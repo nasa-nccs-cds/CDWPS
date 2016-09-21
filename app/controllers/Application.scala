@@ -9,9 +9,6 @@ import nasa.nccs.esgf.wps.{ CDSecurity, wpsObjectParser, BadRequestException, Pr
 
 class Application extends Controller {
 
-  def index = Action {
-    Ok(views.html.index("Your application is ready."))
-  }
   def test = Action {
     Ok("Hello").withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
   }
@@ -36,10 +33,6 @@ class WPS extends Controller {
     } catch {
       case e: Exception => Map[String, String](  "wps.results.dir" -> "~/.wps/results" )
     }
-  }
-
-  def demo = Action {
-    Ok(views.html.demo())
   }
 
   def getResult( id: String, service: String ) = Action {
