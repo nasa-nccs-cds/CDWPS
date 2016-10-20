@@ -1,6 +1,6 @@
-###                                BDWPS Project
+###                                CDWPS Project
 
-_WPS implementation built on scala/play, designed to interface to big data frameworks such as Spark, Akka, etc. Includes a plugin interface to implement various service APIs.  Distributed with a plugin (https://github.com/nasa-nccs-cds/CDAPI) implementing the ESGF-CWT climate data services api._
+_WPS implementation built on scala/play, designed to interface to big data frameworks such as Spark, Akka, etc. Includes a plugin interface to implement various service APIs.  Serves as a web front end to Climate Data Analytics Service (https://github.com/nasa-nccs-cds/CDAS2) implementing the ESGF-CWT climate data services api._
 
 ####  Prerequisite: Install the Scala develpment tools:
 
