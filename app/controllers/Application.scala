@@ -66,7 +66,7 @@ class WPS extends Controller {
           Ok(webProcessManager.describeProcess(service, identifier)).withHeaders( ACCESS_CONTROL_ALLOW_ORIGIN -> "*" )
         case "execute" =>
           val t0 = System.nanoTime()
-          val runargs = Map( "responseform" -> responseform.toString, "storeExecuteResponse" -> storeExecuteResponse, "async" -> status )
+          val runargs = Map( "responseform" -> responseform.toString, "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "async" -> status.toLowerCase )
           logger.info(s"\n\nWPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val response: xml.Elem = webProcessManager.executeProcess(service, identifier, parsed_data_inputs, runargs)
