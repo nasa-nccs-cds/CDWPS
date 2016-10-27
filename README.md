@@ -22,11 +22,14 @@ _WPS implementation built on scala/play, designed to interface to big data frame
         Executing async requests requires that the NetCDF C library be installed on the server.  
         The best ways to accopmplish this are:
         
-            a) Install using a package manager:
+            a) Install netcdf using a package manager:
                     See: http://www.unidata.ucar.edu/software/netcdf/docs/getting_and_building_netcdf.html
                     
-            b) Install UVCDAT, see: https://github.com/UV-CDAT/uvcdat/wiki/install.  
-                    In this case one will need to execute the UVCDAT 'setup_runtime.sh' script before starting the server.
+            b) Install UVCDAT (including netcdf) using conda: 
+                    See: https://github.com/UV-CDAT/uvcdat/wiki/Install-using-Anaconda.  
+                    
+                 >> conda create -n uvcdat-2.6.1 -c uvcdat uvcdat hdf5=1.8.16 pyqt=4.11.3 jpeg=8
+                 >> source activate uvcdat-2.6.1
 
     2) Checkout the CDWPS sources:
 
@@ -37,9 +40,10 @@ _WPS implementation built on scala/play, designed to interface to big data frame
         >> cd CDWPS
         >> sbt run
 
-     4) Access demos:
+     4) CDAS Clients:
 
-        In a browser open the page "http://localhost:9000/wps/demo"
+        a) CDAS Wizard Shell: https://github.com/nasa-nccs-cds/CDASClientConsole
+        b) Python API:        https://github.com/ESGF/esgf-compute-api.git
 
 
 ####  Code development:
@@ -47,16 +51,12 @@ _WPS implementation built on scala/play, designed to interface to big data frame
     1) Install IntelliJ IDEA CE from https://www.jetbrains.com/idea/download/ with Scala plugin enabled.
     
     2) Start IDEA and import the CDWPS Project from Version Control (github) using the address https://github.com/nasa-nccs-cds/CDWPS.git.
-    
-    3) Service provider/api plugin development: See https://github.com/nasa-nccs-cds/CDAPI and https://github.com/nasa-nccs-cds/KernelModuleTemplate.git
-
-    
+        
 
 ####  Project Configuration:
 
     1) Logging: See conf/logback.xml
     
-    2) Configure plugins: See app/servers/Configuration.scala
     
     
 
