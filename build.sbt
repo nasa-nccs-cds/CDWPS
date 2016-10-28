@@ -16,6 +16,7 @@ libraryDependencies ++= Seq( cache, ws, specs2 % Test )
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
 resolvers += "Local CDAS Repository" at "file:///" + getPublishDir( cdasProperties.value ).toString
+resolvers += "Geotoolkit" at "http://maven.geotoolkit.org/"
 
 libraryDependencies += filters
 libraryDependencies ++= Dependencies.scala
