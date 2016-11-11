@@ -56,7 +56,15 @@ class WPS extends Controller {
   def getResult(id: String, service: String) = Action {
     try {
       val result = webProcessManager.getResult(service, id)
-      logger.info("WPS getResult: " + printer.format(result))
+      Ok(result).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    } catch {
+      case e: Exception =>  InternalServerError(e.getMessage) .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    }
+  }
+
+  def getResultStatus(id: String, service: String) = Action {
+    try {
+      val result = webProcessManager.getResultStatus(service, id)
       Ok(result).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
     } catch {
       case e: Exception =>  InternalServerError(e.getMessage) .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
