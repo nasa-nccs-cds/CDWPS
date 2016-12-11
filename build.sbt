@@ -15,8 +15,10 @@ libraryDependencies ++= Seq( cache, ws, specs2 % Test )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
-resolvers += "Local CDAS Repository" at "file:///" + getPublishDir( cdasProperties.value ).toString
+resolvers += "Local CDAS Repository" at "file:///" + getPublishDir( ).toString
 resolvers += "Geotoolkit" at "http://maven.geotoolkit.org/"
+
+dependencyOverrides ++= Set( "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4" )
 
 libraryDependencies += filters
 libraryDependencies ++= Dependencies.scala
@@ -45,32 +47,37 @@ cdasProperties := {
   prop
 }
 
-def getCacheDir( properties: Properties ): File =
+def getCacheDir(): File =
   sys.env.get("CDAS_CACHE_DIR") match {
     case Some(cache_dir) => file(cache_dir)
     case None =>
       val home = file(System.getProperty("user.home"))
-      val cache_dir = properties.getProperty("cdas.cache.dir", "")
-      if (cache_dir.isEmpty) { home / ".cdas" / "cache" } else file( cache_dir )
+      home / ".cdas" / "cache"
   }
 
-def getPublishDir( properties: Properties ): File =
-  sys.env.get("SBT_PUBLISH_DIR") match {
+def getPublishDir(): File = {
+  val pdir = sys.env.get("SBT_PUBLISH_DIR") match {
     case Some(cache_dir) => file(cache_dir)
-    case None =>
-      val home = file(System.getProperty("user.home"))
-      val cache_dir = properties.getProperty("cdas.publish.dir", "")
-      if (cache_dir.isEmpty) { home / ".cdas" / "cache" } else file( cache_dir )
+    case None => getCacheDir() / "publish"
   }
+  pdir.mkdirs()
+  pdir
+}
 
 lazy val cdas_cache_dir = settingKey[File]("The CDAS cache directory.")
 
 cdas_cache_dir := {
-  val cache_dir = getCacheDir( cdasProperties.value )
+  val cache_dir = getCacheDir( )
   cache_dir.mkdirs()
-  cdasProperties.value.put( "cdas.cache.dir", cache_dir.getAbsolutePath )
-  try{ IO.write( cdasProperties.value, "", cdasPropertiesFile.value ) } catch { case err: Exception => println("Error writing to properties file: " + err.getMessage ) }
   cache_dir
+}
+
+lazy val cdas_publish_dir = settingKey[File]("The CDAS publish directory.")
+
+cdas_publish_dir := {
+  val pdir = getPublishDir( )
+  pdir.mkdirs()
+  pdir
 }
 
 cdasLocalCollectionsFile :=  {
@@ -79,11 +86,11 @@ cdasLocalCollectionsFile :=  {
   collections_file
 }
 
-unmanagedClasspath in Compile += cdas_cache_dir.value
-unmanagedClasspath in Runtime += cdas_cache_dir.value
-unmanagedClasspath in Test += cdas_cache_dir.value
+unmanagedClasspath in Compile += cdas_publish_dir.value
+unmanagedClasspath in Runtime += cdas_publish_dir.value
+unmanagedClasspath in Test += cdas_publish_dir.value
 
-// dependencyOverrides ++= Set( "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4" )
+
 // val appDependencies = Seq( "org.scalatestplus" % "play_2.10" % "1.0.0" % "test" )
 // releaseSettings
 // scalariformSettings
