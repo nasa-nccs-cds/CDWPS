@@ -18,13 +18,13 @@ resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
 resolvers += "Local CDAS Repository" at "file:///" + getPublishDir( ).toString
 resolvers += "Geotoolkit" at "http://maven.geotoolkit.org/"
 
-dependencyOverrides ++= Set( "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4" )
+val fasterxml = "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4"
+
+dependencyOverrides ++= Set( fasterxml )
 
 libraryDependencies += filters
 libraryDependencies ++= Dependencies.scala
 libraryDependencies ++= Dependencies.CDS2
-
-dependencyOverrides ++= Set( "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4" )
 
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 

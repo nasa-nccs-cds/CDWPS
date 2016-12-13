@@ -14,7 +14,7 @@ import nasa.nccs.esgf.wps.{
 }
 
 class WPS extends Controller {
-  val logger = LoggerFactory.getLogger(this.getClass)
+  val logger = LoggerFactory.getLogger("application")
   val webProcessManager = new ProcessManager(serverConfiguration)
   val printer = new scala.xml.PrettyPrinter(200, 3)
 
@@ -82,8 +82,12 @@ class WPS extends Controller {
     try {
       request.toLowerCase match {
         case "getcapabilities" =>
+          logger.info("getcapabilities")
+          print("getcapabilities")
           Ok(webProcessManager.getCapabilities(service, identifier)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "describeprocess" =>
+          logger.info("describeprocess")
+          print("describeprocess")
           Ok(webProcessManager.describeProcess(service, identifier)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "execute" =>
           val t0 = System.nanoTime()
