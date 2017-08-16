@@ -10,12 +10,14 @@ import nasa.nccs.esgf.wps.{
   wpsObjectParser,
   BadRequestException,
   zmqProcessManager,
+  ProcessManager,
   NotAcceptableException
 }
 
-class WPS extends Controller {
+class WPS( embedded_server: Boolean = false ) extends Controller {
   val logger = LoggerFactory.getLogger("application")
-  val webProcessManager = new zmqProcessManager(serverConfiguration)
+  val webProcessManager = if( embedded_server )   { new ProcessManager(serverConfiguration) }
+                          else                    { new zmqProcessManager(serverConfiguration) }
   val printer = new scala.xml.PrettyPrinter(200, 3)
 
   def serverConfiguration: Map[String, String] = {
