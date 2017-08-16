@@ -7,7 +7,7 @@ organization := "nccs"
 
 version := "1.1-SNAPSHOT"
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.10.5"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
