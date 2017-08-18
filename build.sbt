@@ -24,7 +24,7 @@ dependencyOverrides ++= Set( fasterxml )
 
 libraryDependencies += filters
 libraryDependencies ++= Dependencies.scala
-libraryDependencies ++= Dependencies.CDS2
+libraryDependencies ++= Dependencies.EDAS
 
 ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 

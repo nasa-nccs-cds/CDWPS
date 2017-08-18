@@ -14,10 +14,13 @@ import nasa.nccs.esgf.wps.{
   NotAcceptableException
 }
 
-class WPS( embedded_server: Boolean = false ) extends Controller {
+class WPS extends Controller {
   val logger = LoggerFactory.getLogger("application")
-  val webProcessManager = if( embedded_server )   { new ProcessManager(serverConfiguration) }
-                          else                    { new zmqProcessManager(serverConfiguration) }
+  val config = serverConfiguration
+  val server_address = config.getOrElse( "edas.server.address", "" )
+  logger.info( "Starting webProcessManager with server_address = " + server_address )
+  val webProcessManager = if( server_address.isEmpty )   { new ProcessManager(config) }
+                          else                           { new zmqProcessManager(config) }
   val printer = new scala.xml.PrettyPrinter(200, 3)
 
   def serverConfiguration: Map[String, String] = {
