@@ -108,12 +108,15 @@ class WPS extends Controller {
       }
     } catch {
       case e: BadRequestException =>
+        val error_mesage = CDSecurity.sanitize(  e.getMessage + ":\n" + e.getStackTrace.map( _.toString ).mkString("\n") )
         BadRequest(
-          <error type="ImproperlyFormedRequest"> {"<![CDATA[\n " + CDSecurity.sanitize( e.getMessage ) + "\n]]>"} </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+          <error type="ImproperlyFormedRequest"> {"<![CDATA[\n " + error_mesage + "\n]]>"} </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
       case e: NotAcceptableException =>
-        NotAcceptable(<error type="UnacceptableRequest"> {"<![CDATA[\n " + CDSecurity.sanitize( e.getMessage ) + "\n]]>"} </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+        val error_mesage = CDSecurity.sanitize(  e.getMessage + ":\n" + e.getStackTrace.map( _.toString ).mkString("\n") )
+        NotAcceptable(<error type="UnacceptableRequest"> {"<![CDATA[\n " + error_mesage + "\n]]>"} </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
       case e: Exception =>
-        InternalServerError(<error type="InternalServerError"> {"<![CDATA[\n " + CDSecurity.sanitize( e.getMessage ) + "\n]]>"} </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+        val error_mesage = CDSecurity.sanitize(  e.getMessage + ":\n" + e.getStackTrace.map( _.toString ).mkString("\n") )
+        InternalServerError(<error type="InternalServerError"> {"<![CDATA[\n " + error_mesage + "\n]]>"} </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
     }
   }
 }
