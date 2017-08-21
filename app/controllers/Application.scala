@@ -102,8 +102,8 @@ class WPS extends Controller {
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val response: xml.Node = webProcessManager.executeProcess(service, identifier, parsed_data_inputs, runargs)
           logger.info("Completed request '%s' in %.4f sec".format(identifier, (System.nanoTime() - t0) / 1.0E9))
-//          val printer = new scala.xml.PrettyPrinter(200, 3)
-//          println("---------->>>> Final Result: " + printer.format(response))
+          val printer = new scala.xml.PrettyPrinter(200, 3)
+          println("---------->>>> Final Result: " + printer.format(response))
           Ok(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
       }
     } catch {
