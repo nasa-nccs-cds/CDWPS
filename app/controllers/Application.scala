@@ -3,16 +3,11 @@ package controllers
 import org.slf4j.LoggerFactory
 import play.api._
 import java.io.File
+
 import play.api.Play
 import play.api.mvc._
-import nasa.nccs.esgf.wps.{
-  CDSecurity,
-  wpsObjectParser,
-  BadRequestException,
-  zmqProcessManager,
-  ProcessManager,
-  NotAcceptableException
-}
+import nasa.nccs.esgf.wps.{BadRequestException, CDSecurity, NotAcceptableException, ProcessManager, wpsObjectParser, zmqProcessManager}
+import nasa.nccs.wps.ResponseSyntax
 
 class WPS extends Controller {
   val logger = LoggerFactory.getLogger("application")
@@ -60,7 +55,7 @@ class WPS extends Controller {
 
   def getResult(id: String, service: String) = Action {
     try {
-      val result = webProcessManager.getResult(service, id)
+      val result = webProcessManager.getResult(service, id, ResponseSyntax.WPS )
       Ok(result).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
     } catch {
       case e: Exception =>  InternalServerError(e.getMessage) .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -69,7 +64,7 @@ class WPS extends Controller {
 
   def getResultStatus(id: String, service: String) = Action {
     try {
-      val result = webProcessManager.getResultStatus(service, id)
+      val result = webProcessManager.getResultStatus(service, id, ResponseSyntax.WPS )
       Ok(result).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
     } catch {
       case e: Exception =>  InternalServerError(e.getMessage) .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -89,15 +84,15 @@ class WPS extends Controller {
         case "getcapabilities" =>
           logger.info("getcapabilities")
           print("getcapabilities")
-          Ok(webProcessManager.getCapabilities(service, identifier)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+          Ok(webProcessManager.getCapabilities(service, identifier, Map("syntax"->"WPS"))).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "describeprocess" =>
           logger.info("describeprocess")
           print("describeprocess")
-          Ok(webProcessManager.describeProcess(service, identifier)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+          Ok(webProcessManager.describeProcess(service, identifier, Map("syntax"->"WPS"))).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "execute" =>
           val t0 = System.nanoTime()
           val runargs =
-            Map("responseform" -> responseform.toString,"storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "async" -> status.toLowerCase)
+            Map("responseform" -> responseform.toString,"storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "async" -> status.toLowerCase, "syntax" -> "WPS" )
           logger.info(s"\n\nWPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val response: xml.Node = webProcessManager.executeProcess(service, identifier, datainputs, parsed_data_inputs, runargs)
