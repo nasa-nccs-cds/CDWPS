@@ -100,7 +100,7 @@ class WPS extends Controller {
             Map("responseform" -> responseform.toString,"storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "async" -> status.toLowerCase)
           logger.info(s"\n\nWPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
-          val response: xml.Node = webProcessManager.executeProcess(service, identifier, parsed_data_inputs, runargs)
+          val response: xml.Node = webProcessManager.executeProcess(service, identifier, datainputs, parsed_data_inputs, runargs)
           logger.info("Completed request '%s' in %.4f sec".format(identifier, (System.nanoTime() - t0) / 1.0E9))
           val printer = new scala.xml.PrettyPrinter(200, 3)
           println("---------->>>> Final Result: " + printer.format(response))
