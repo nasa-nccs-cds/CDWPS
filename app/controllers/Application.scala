@@ -75,7 +75,6 @@ class WPS extends Controller {
               request: String,
               identifier: String,
               service: String,
-              responseform: String,
               storeExecuteResponse: String,
               status: String,
               datainputs: String) = Action {
@@ -92,7 +91,7 @@ class WPS extends Controller {
         case "execute" =>
           val t0 = System.nanoTime()
           val runargs =
-            Map("responseform" -> responseform.toString,"storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "async" -> status.toLowerCase, "syntax" -> "WPS" )
+            Map("responseform" -> "WPS","storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase )
           logger.info(s"\n\nWPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val response: xml.Node = webProcessManager.executeProcess(service, identifier, datainputs, parsed_data_inputs, runargs)
