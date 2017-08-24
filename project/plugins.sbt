@@ -1,6 +1,8 @@
 // The Play plugin
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.4.6")
 
+addSbtPlugin("com.github.play2war" % "play2-war-plugin" % "1.4-beta1")
+
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.5.0")
 
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.8.2")

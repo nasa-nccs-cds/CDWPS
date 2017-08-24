@@ -1,5 +1,6 @@
 import play.sbt.PlayImport._
 import play.sbt.routes.RoutesKeys._
+import com.github.play2war.plugin._
 
 name := """CDWPS"""
 
@@ -8,6 +9,14 @@ organization := "nccs"
 version := "1.1-SNAPSHOT"
 
 scalaVersion := "2.10.5"
+
+Play2WarPlugin.play2WarSettings
+
+Play2WarKeys.servletVersion := "3.0"
+
+Play2WarKeys.targetName := Some("edas")
+
+Play2WarKeys.explodedJar := true
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
