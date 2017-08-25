@@ -22,9 +22,29 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 libraryDependencies ++= Seq( cache, ws, specs2 % Test )
 
+def getCacheDir(): File = {
+  val cdir = sys.env.get("EDAS_CACHE_DIR") match {
+    case Some(cache_dir) => file(cache_dir)
+    case None =>
+      val home = file(System.getProperty("user.home"))
+      home / ".cdas" / "cache"
+  }
+  cdir.mkdirs()
+  cdir
+}
+
+def getPublishDir(): File = {
+  val pdir = sys.env.get("SBT_PUBLISH_DIR") match {
+    case Some(cache_dir) => file(cache_dir)
+    case None => getCacheDir() / "publish"
+  }
+  pdir.mkdirs()
+  pdir
+}
+
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
-resolvers += "Local CDAS Repository" at "file:///" + getPublishDir( ).toString
+resolvers += "Local EDAS Repository" at "file:///" + getPublishDir( ).toString
 resolvers += "Geotoolkit" at "http://maven.geotoolkit.org/"
 
 val fasterxml = "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4"
@@ -46,7 +66,6 @@ import java.util.Properties
 
 lazy val cdasProperties = settingKey[Properties]("The cdas properties map")
 lazy val cdasPropertiesFile = settingKey[File]("The cdas properties file")
-lazy val cdasLocalCollectionsFile = settingKey[File]("The cdas local Collections file")
 
 cdasPropertiesFile :=  baseDirectory.value / "project" / "cdas.properties"
 
@@ -56,39 +75,13 @@ cdasProperties := {
   prop
 }
 
-def getCacheDir(): File =
-  sys.env.get("CDAS_CACHE_DIR") match {
-    case Some(cache_dir) => file(cache_dir)
-    case None =>
-      val home = file(System.getProperty("user.home"))
-      home / ".cdas" / "cache"
-  }
+lazy val cdas_cache_dir = settingKey[File]("The EDAS cache directory.")
+cdas_cache_dir :=  getCacheDir( )
 
-def getPublishDir(): File = {
-  val pdir = sys.env.get("SBT_PUBLISH_DIR") match {
-    case Some(cache_dir) => file(cache_dir)
-    case None => getCacheDir() / "publish"
-  }
-  pdir.mkdirs()
-  pdir
-}
+lazy val cdas_publish_dir = settingKey[File]("The EDAS publish directory.")
+cdas_publish_dir :=  getPublishDir( )
 
-lazy val cdas_cache_dir = settingKey[File]("The CDAS cache directory.")
-
-cdas_cache_dir := {
-  val cache_dir = getCacheDir( )
-  cache_dir.mkdirs()
-  cache_dir
-}
-
-lazy val cdas_publish_dir = settingKey[File]("The CDAS publish directory.")
-
-cdas_publish_dir := {
-  val pdir = getPublishDir( )
-  pdir.mkdirs()
-  pdir
-}
-
+lazy val cdasLocalCollectionsFile = settingKey[File]("The cdas local Collections file")
 cdasLocalCollectionsFile :=  {
   val collections_file = cdas_cache_dir.value / "local_collections.xml"
   if( !collections_file.exists ) { xml.XML.save( collections_file.getAbsolutePath, <collections></collections> ) }

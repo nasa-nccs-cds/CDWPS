@@ -1,6 +1,6 @@
 ###                                CDWPS Project
 
-_WPS implementation built on scala/play, designed to interface to big data frameworks such as Spark, Akka, etc. Includes a plugin interface to implement various service APIs.  Serves as a web front end to Climate Data Analytics Service (https://github.com/nasa-nccs-cds/CDAS2) implementing the ESGF-CWT climate data services api._
+_WPS implementation built on scala/play, designed to interface to big data frameworks such as Spark, Akka, etc. Includes a plugin interface to implement various service APIs.  Serves as a web front end to Climate Data Analytics Service (https://github.com/nasa-nccs-cds/EDAS) implementing the ESGF-CWT climate data services api._
 
 ####  Prerequisite: Install the Scala develpment tools:
 
@@ -12,10 +12,10 @@ _WPS implementation built on scala/play, designed to interface to big data frame
 
 ####  Install and run CDWPS:
 
-    0) Install dependent projects (this step will become unnecessary when the NASA Maven server is up and running):
+    0) Install dependent projects:
     
-        >> git clone https://github.com/nasa-nccs-cds/CDAS2.git
-        >> cd CDAS2; sbt publish-local
+        >> git clone https://github.com/nasa-nccs-cds/EDAS.git
+        >> cd EDAS; sbt publish-local
         
     1) Optional Dependencies
     
@@ -28,8 +28,8 @@ _WPS implementation built on scala/play, designed to interface to big data frame
             b) Install UVCDAT (including netcdf) using conda: 
                     See: https://github.com/UV-CDAT/uvcdat/wiki/Install-using-Anaconda.  
                     
-                 >> conda create -n uvcdat-2.6.1 -c uvcdat uvcdat hdf5=1.8.16 pyqt=4.11.3 jpeg=8
-                 >> source activate uvcdat-2.6.1
+                 >> conda create -n edas -c conda-forge -c uvcdat uvcdat pyzmq psutil lxml
+                 >> source activate edas
 
     2) Checkout the CDWPS sources:
 
@@ -40,9 +40,9 @@ _WPS implementation built on scala/play, designed to interface to big data frame
         >> cd CDWPS
         >> sbt run
 
-     4) CDAS Clients:
+     4) EDAS Clients:
 
-        a) CDAS Wizard Shell: https://github.com/nasa-nccs-cds/CDASClientConsole
+        a) EDAS Wizard Shell: https://github.com/nasa-nccs-cds/EDASClientConsole
         b) Python API:        https://github.com/ESGF/esgf-compute-api.git
 
 
