@@ -16,7 +16,7 @@ Play2WarKeys.servletVersion := "3.0"
 
 Play2WarKeys.targetName := Some("edas")
 
-Play2WarKeys.explodedJar := true
+Play2WarKeys.explodedJar := false
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
