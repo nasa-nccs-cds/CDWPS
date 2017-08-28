@@ -7,10 +7,11 @@ import java.io.File
 import play.api.Play
 import play.api.mvc._
 import nasa.nccs.esgf.wps.{BadRequestException, CDSecurity, NotAcceptableException, ProcessManager, wpsObjectParser, zmqProcessManager}
+import nasa.nccs.utilities.EDASLogManager
 import nasa.nccs.wps.ResponseSyntax
 
 class WPS extends Controller {
-  val logger = LoggerFactory.getLogger("application")
+  val logger = EDASLogManager.getCurrentLogger;  /* LoggerFactory.getLogger("application") */
   val config = serverConfiguration
   val server_address = config.getOrElse( "edas.server.address", "" )
   logger.info( "Starting webProcessManager with server_address = " + server_address )
