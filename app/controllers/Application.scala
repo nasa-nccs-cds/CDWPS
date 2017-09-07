@@ -94,7 +94,7 @@ class WPS extends Controller {
         case "execute" =>
           val t0 = System.nanoTime()
           val runargs = Map("responseform" -> "wps","storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase )
-          logger.info(s"\n\nWPS EXECUTE: identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
+          logger.info(s"\n\nWPS EXECUTE: server_address=$server_address, identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val rId: String = RandomStringUtils.random( 6, true, true )
           val request = TaskRequest( rId, service, parsed_data_inputs)
