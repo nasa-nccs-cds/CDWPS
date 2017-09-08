@@ -4,18 +4,26 @@ import org.slf4j.LoggerFactory
 import play.api._
 import java.io.File
 
+import nasa.nccs.edas.engine.ExecutionCallback
+
+import scala.collection.mutable.Queue
 import nasa.nccs.esgf.process.TaskRequest
+import nasa.nccs.edas.utilities.appParameters
 import play.api.Play
 import play.api.mvc._
-import nasa.nccs.esgf.wps.{BadRequestException, CDSecurity, NotAcceptableException, ProcessManager, wpsObjectParser, zmqProcessManager}
+import nasa.nccs.esgf.wps._
 import nasa.nccs.utilities.EDASLogManager
-import nasa.nccs.wps.ResponseSyntax
+import nasa.nccs.wps.{ResponseSyntax, WPSResponse}
 import org.apache.commons.lang.RandomStringUtils
 
 class WPS extends Controller {
   val logger = EDASLogManager.getCurrentLogger;  /* LoggerFactory.getLogger("application") */
-  val config = serverConfiguration
+  val config: Map[String, String] = serverConfiguration
+  val jobQueue = Queue[Job]()
   val server_address = config.getOrElse( "edas.server.address", "" )
+  appParameters.setCustomCacheDir( config.getOrElse( "edas.cache.dir", "" ) )
+  appParameters.addConfigParams(config)
+
   logger.info( "Starting webProcessManager with server_address = " + server_address )
   val webProcessManager = if( server_address.isEmpty )   { new ProcessManager(config) }
                           else                           { new zmqProcessManager(config) }
@@ -98,7 +106,10 @@ class WPS extends Controller {
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val rId: String = RandomStringUtils.random( 6, true, true )
           val request = TaskRequest( rId, service, parsed_data_inputs)
-          val response: xml.Node = webProcessManager.executeProcess( request, identifier, datainputs, runargs )
+          val job =  Job( request, identifier, datainputs, runargs )
+          jobQueue += job
+          val executionCallback: ExecutionCallback = new ExecutionCallback { override def execute(jobId: String, results: WPSResponse): Unit = {} }
+          val response: xml.Node = webProcessManager.executeProcess( job, Some(executionCallback) )
           logger.info("Completed request '%s' in %.4f sec".format(identifier, (System.nanoTime() - t0) / 1.0E9))
           val printer = new scala.xml.PrettyPrinter(200, 3)
           println("---------->>>> Final Result: " + printer.format(response))
