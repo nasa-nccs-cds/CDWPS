@@ -7,7 +7,7 @@ import java.io.File
 import nasa.nccs.esgf.process.TaskRequest
 import play.api.Play
 import play.api.mvc._
-import nasa.nccs.esgf.wps.{BadRequestException, CDSecurity, NotAcceptableException, ProcessManager, wpsObjectParser, zmqProcessManager}
+import nasa.nccs.esgf.wps._
 import nasa.nccs.utilities.EDASLogManager
 import nasa.nccs.wps.ResponseSyntax
 import org.apache.commons.lang.RandomStringUtils
@@ -95,10 +95,8 @@ class WPS extends Controller {
           val t0 = System.nanoTime()
           val runargs = Map("responseform" -> "wps","storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase )
           logger.info(s"\n\nWPS EXECUTE: server_address=$server_address, identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
-          val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val rId: String = RandomStringUtils.random( 6, true, true )
-          val request = TaskRequest( rId, service, parsed_data_inputs)
-          val response: xml.Node = webProcessManager.executeProcess( request, identifier, datainputs, runargs )
+          val response: xml.Node = webProcessManager.executeProcess( Job( rId, identifier, datainputs, runargs ) )
           logger.info("Completed request '%s' in %.4f sec".format(identifier, (System.nanoTime() - t0) / 1.0E9))
           val printer = new scala.xml.PrettyPrinter(200, 3)
           println("---------->>>> Final Result: " + printer.format(response))
