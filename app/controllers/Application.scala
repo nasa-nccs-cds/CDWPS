@@ -5,21 +5,21 @@ import play.api._
 import java.io.File
 
 import nasa.nccs.edas.engine.ExecutionCallback
+import java.util.concurrent.PriorityBlockingQueue
 
-import scala.collection.mutable.Queue
 import nasa.nccs.esgf.process.TaskRequest
 import nasa.nccs.edas.utilities.appParameters
 import play.api.Play
 import play.api.mvc._
 import nasa.nccs.esgf.wps._
-import nasa.nccs.utilities.EDASLogManager
+import nasa.nccs.utilities.{EDASLogManager, Loggable}
 import nasa.nccs.wps.{ResponseSyntax, WPSResponse}
 import org.apache.commons.lang.RandomStringUtils
 
 class WPS extends Controller {
   val logger = EDASLogManager.getCurrentLogger;  /* LoggerFactory.getLogger("application") */
   val config: Map[String, String] = serverConfiguration
-  val jobQueue = Queue[Job]()
+  val jobQueue = new PriorityBlockingQueue[Job]()
   val server_address = config.getOrElse( "edas.server.address", "" )
   appParameters.setCustomCacheDir( config.getOrElse( "edas.cache.dir", "" ) )
   appParameters.addConfigParams(config)
@@ -100,19 +100,14 @@ class WPS extends Controller {
           print("describeprocess")
           Ok(webProcessManager.describeProcess(service, identifier, Map("syntax"->"WPS"))).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "execute" =>
-          val t0 = System.nanoTime()
+
           val runargs = Map("responseform" -> "wps","storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase )
           logger.info(s"\n\nWPS EXECUTE: server_address=$server_address, identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val rId: String = RandomStringUtils.random( 6, true, true )
           val request = TaskRequest( rId, service, parsed_data_inputs)
           val job =  Job( request, identifier, datainputs, runargs )
-          jobQueue += job
-          val executionCallback: ExecutionCallback = new ExecutionCallback { override def execute(jobId: String, results: WPSResponse): Unit = {} }
-          val response: xml.Node = webProcessManager.executeProcess( job, Some(executionCallback) )
-          logger.info("Completed request '%s' in %.4f sec".format(identifier, (System.nanoTime() - t0) / 1.0E9))
-          val printer = new scala.xml.PrettyPrinter(200, 3)
-          println("---------->>>> Final Result: " + printer.format(response))
+          jobQueue.put(job)
           Ok(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
       }
     } catch {
@@ -127,6 +122,21 @@ class WPS extends Controller {
         val error_mesage = CDSecurity.sanitize(  e.getMessage + ":\n" + e.getStackTrace.map( _.toString ).mkString("\n") )
         InternalServerError(<error type="InternalServerError"> {"<![CDATA[\n " + error_mesage + "\n]]>"} </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
     }
+  }
+}
+
+class serverRequestManager() extends Thread with Loggable {
+  override def run() {
+
+  }
+
+  def submitJob( job: Job ): Unit = {
+    val t0 = System.nanoTime()
+    val executionCallback: ExecutionCallback = new ExecutionCallback { override def execute(jobId: String, results: WPSResponse): Unit = {} }
+    val response: xml.Node = webProcessManager.executeProcess( job, Some(executionCallback) )
+    logger.info("Completed request '%s' in %.4f sec".format(job.identifier, (System.nanoTime() - t0) / 1.0E9))
+    val printer = new scala.xml.PrettyPrinter(200, 3)
+    println("---------->>>> Final Result: " + printer.format(response))
   }
 }
 
