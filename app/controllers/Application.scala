@@ -18,45 +18,9 @@ import org.apache.commons.lang.RandomStringUtils
 
 class WPS extends Controller {
   val logger = EDASLogManager.getCurrentLogger;  /* LoggerFactory.getLogger("application") */
-
   val jobQueue = new PriorityBlockingQueue[Job]()
-
   val printer = new scala.xml.PrettyPrinter(200, 3)
 
-
-  def getResultFile(id: String, service: String) = Action {
-    try {
-      webProcessManager.getResultFilePath(service, id) match {
-        case Some(resultFilePath: String) =>
-          logger.info(s"WPS getResult: resultFilePath=$resultFilePath")
-          Ok.sendFile(new File(resultFilePath)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-        case None =>
-          NotFound("Result not yet available").withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-      }
-    } catch {
-      case e: Exception =>
-        InternalServerError(e.getMessage)
-          .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-    }
-  }
-
-  def getResult(id: String, service: String) = Action {
-    try {
-      val result = webProcessManager.getResult(service, id, ResponseSyntax.WPS )
-      Ok(result).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-    } catch {
-      case e: Exception =>  InternalServerError(e.getMessage) .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-    }
-  }
-
-  def getResultStatus(id: String, service: String) = Action {
-    try {
-      val result = webProcessManager.getResultStatus(service, id, ResponseSyntax.WPS )
-      Ok(result).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-    } catch {
-      case e: Exception =>  InternalServerError(e.getMessage) .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-    }
-  }
 
   def execute(version: String,
               request: String,
@@ -70,9 +34,9 @@ class WPS extends Controller {
       logger.info(s"\n\nWPS EXECUTE: server_address=$server_address, identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
       val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
       val rId: String = RandomStringUtils.random( 6, true, true )
-      val request = TaskRequest( rId, service, parsed_data_inputs)
-      val job = Job(request, identifier, datainputs, runargs)
+      val job = Job( rId, service, identifier, datainputs, runargs)
       jobQueue.put(job)
+      Ok(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
     }
   }
 }
@@ -90,36 +54,37 @@ class serverRequestManager() extends Thread with Loggable {
 
   }
 
-  def submitJob( processMgr: GenericProcessManager, job: Job ): Unit = {
+  def submitJob( processMgr: GenericProcessManager, job: Job ): Unit = try {
     val t0 = System.nanoTime()
     request.toLowerCase match {
       case "getcapabilities" =>
         logger.info("getcapabilities")
         print("getcapabilities")
-        Ok(webProcessManager.getCapabilities(service, identifier, Map("syntax"->"WPS"))).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+        Ok(processMgr.getCapabilities(service, identifier, Map("syntax" -> "WPS"))).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
       case "describeprocess" =>
         logger.info("describeprocess")
         print("describeprocess")
-        Ok(webProcessManager.describeProcess(service, identifier, Map("syntax"->"WPS"))).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+        Ok(processMgr.describeProcess(service, identifier, Map("syntax" -> "WPS"))).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
       case "execute" =>
 
-        val runargs = Map("responseform" -> "wps","storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase )
+        val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase)
         logger.info(s"\n\nWPS EXECUTE: server_address=$server_address, identifier=$identifier, service=$service, runargs=$runargs, datainputs=$datainputs\n\n")
         val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
-        val rId: String = RandomStringUtils.random( 6, true, true )
-        val request = TaskRequest( rId, service, parsed_data_inputs)
-        val executionCallback: ExecutionCallback = new ExecutionCallback { override def execute(jobId: String, results: WPSResponse): Unit = {} }
-        val response: xml.Node = processMgr.executeProcess( job, Some(executionCallback) )
+        val rId: String = RandomStringUtils.random(6, true, true)
+        val request = TaskRequest(rId, service, parsed_data_inputs)
+        val executionCallback: ExecutionCallback = new ExecutionCallback {
+          override def execute(jobId: String, results: WPSResponse): Unit = {}
+        }
+        val response: xml.Node = processMgr.executeProcess(job, Some(executionCallback))
         logger.info("Completed request '%s' in %.4f sec".format(job.identifier, (System.nanoTime() - t0) / 1.0E9))
         val printer = new scala.xml.PrettyPrinter(200, 3)
         println("---------->>>> Final Result: " + printer.format(response))
         Ok(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
     }
   } catch {
-    case e: BadRequestException =>
+      case e: BadRequestException =>
       val error_mesage = CDSecurity.sanitize(  e.getMessage + ":\n" + e.getStackTrace.map( _.toString ).mkString("\n") )
-      BadRequest(
-        <error type="ImproperlyFormedRequest"> {"<![CDATA[\n " + error_mesage + "\n]]>"} </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+      BadRequest( <error type="ImproperlyFormedRequest"> {"<![CDATA[\n " + error_mesage + "\n]]>"} </error> ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
     case e: NotAcceptableException =>
       val error_mesage = CDSecurity.sanitize(  e.getMessage + ":\n" + e.getStackTrace.map( _.toString ).mkString("\n") )
       NotAcceptable(<error type="UnacceptableRequest"> {"<![CDATA[\n " + error_mesage + "\n]]>"} </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -127,7 +92,41 @@ class serverRequestManager() extends Thread with Loggable {
       val error_mesage = CDSecurity.sanitize(  e.getMessage + ":\n" + e.getStackTrace.map( _.toString ).mkString("\n") )
       InternalServerError(<error type="InternalServerError"> {"<![CDATA[\n " + error_mesage + "\n]]>"} </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
   }
+
+  def getResultFile(processMgr: GenericProcessManager, id: String, service: String) = Action {
+    try {
+      processMgr.getResultFilePath(service, id) match {
+        case Some(resultFilePath: String) =>
+          logger.info(s"WPS getResult: resultFilePath=$resultFilePath")
+          Ok.sendFile(new File(resultFilePath)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+        case None =>
+          NotFound("Result not yet available").withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+      }
+    } catch {
+      case e: Exception =>
+        InternalServerError(e.getMessage)
+          .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    }
   }
+
+  def getResult(processMgr: GenericProcessManager, id: String, service: String) = Action {
+    try {
+      val result = processMgr.getResult(service, id, ResponseSyntax.WPS )
+      Ok(result).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    } catch {
+      case e: Exception =>  InternalServerError(e.getMessage) .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    }
+  }
+
+  def getResultStatus(processMgr: GenericProcessManager, id: String, service: String) = Action {
+    try {
+      val result = processMgr.getResultStatus(service, id, ResponseSyntax.WPS )
+      Ok(result).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    } catch {
+      case e: Exception =>  InternalServerError(e.getMessage) .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    }
+  }
+
 
   def serverConfiguration: Map[String, String] = {
     try {
