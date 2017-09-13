@@ -102,8 +102,8 @@ class ServerRequestManager extends Thread with Loggable {
 
   def initialize(): Unit = {
     start()
-//    getCapabilities("")
-//    getCapabilities("col")
+    getCapabilities("")
+    getCapabilities("col")
   }
 
   def getResponse( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
@@ -134,11 +134,11 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
   def getCapabilities( identifier: String ): xml.Node = {
-    capabilitiesCache.getOrElseUpdate( identifier, executeJob( new Job( "getCapabilities:" + identifier, identifier ) ) )
+    capabilitiesCache.getOrElseUpdate( identifier, executeJob( new Job( "getcapabilities:" + identifier, identifier ) ) )
   }
 
   def describeProcess( identifier: String ): xml.Node = {
-    processesCache.getOrElseUpdate( identifier, executeJob( new Job( "describeProcess:" + identifier, identifier ) ) )
+    processesCache.getOrElseUpdate( identifier, executeJob( new Job( "describeprocess:" + identifier, identifier ) ) )
   }
 
 
@@ -214,8 +214,7 @@ class ServerRequestManager extends Thread with Loggable {
         yield (key -> value.get.toString)
       Map[String, String](map_pairs.toSeq: _*)
     } catch {
-      case e: Exception =>
-        Map[String, String]("wps.results.dir" -> "~/.wps/results")
+      case e: Exception => Map.empty[String, String]
     }
   }
 
