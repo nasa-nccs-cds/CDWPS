@@ -97,6 +97,7 @@ class ServerRequestManager extends Thread with Loggable {
   def addJob( job: Job ): Unit = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
     jobQueue.put( job.requestId )
+    logger.info( "Adding job to job queue: " + job.requestId )
   }
 
   def initialize(): Unit = {
@@ -123,6 +124,7 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
   def updateJobStatus( requestId: String, status: StatusValue.Value ): Job = {
+    logger.info( "updateJobStatus: " + requestId + ", status = " + status.toString )
     jobDirectory.get( requestId ) match {
       case Some( jobStatus ) =>
         jobStatus.setStatus( status )
