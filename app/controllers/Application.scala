@@ -29,7 +29,7 @@ class WPS extends Controller {
   val logger = EDASLogManager.getCurrentLogger;
   val printer = new scala.xml.PrettyPrinter(200, 3)
   val serverRequestManager = new ServerRequestManager()
-  serverRequestManager.start()
+  serverRequestManager.initialize()
 
   def execute(version: String, request: String, identifier: String, storeExecuteResponse: String, status: String, datainputs: String) = Action {
     try {
@@ -97,6 +97,12 @@ class ServerRequestManager extends Thread with Loggable {
   def addJob( job: Job ): Unit = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
     jobQueue.put( job.requestId )
+  }
+
+  def initialize(): Unit = {
+    start()
+    getCapabilities("")
+    getCapabilities("col")
   }
 
   def getResponse( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
