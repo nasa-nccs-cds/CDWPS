@@ -102,25 +102,29 @@ class ServerRequestManager extends Thread with Loggable {
 
   def initialize(): Unit = {
     start()
-//    getCapabilities("")
-//    getCapabilities("col")
+    getCapabilities("")
+    getCapabilities("col")
   }
 
   def getResponse( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
     val sleeptime_ms = 100L
-    if( current_time_msec >= timeout_sec * 1000 ) {
+    val response = if( current_time_msec >= timeout_sec * 1000 ) {
       <error type="InternalServerError"> "Timed out waiting for response: " + responseId </error>
+    } else {
+      responseCache.get(responseId) match {
+        case Some(response) => return response
+        case None =>
+          Thread.sleep(sleeptime_ms)
+          getResponse(responseId, timeout_sec, current_time_msec + sleeptime_ms)
+      }
     }
-    responseCache.get( responseId ) match {
-      case Some( response ) => return response
-      case None =>
-        Thread.sleep( sleeptime_ms )
-        getResponse( responseId, timeout_sec, current_time_msec + sleeptime_ms )
-    }
+    logger.info( s"getResponse($responseId): ${response.toString}" )
+    response
   }
 
   def executeJob( job: Job, timeout_sec: Int = 180 ): xml.Node = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
+    logger.info( "executeJob: " + job.requestId  )
     jobQueue.put( job.requestId )
     getResponse( job.requestId, 180 )
   }
@@ -136,7 +140,9 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
   def getCapabilities( identifier: String ): xml.Node = {
-    capabilitiesCache.getOrElseUpdate( identifier, executeJob( new Job( "getcapabilities:" + identifier, identifier ) ) )
+    val cap = capabilitiesCache.getOrElseUpdate( identifier, executeJob( new Job( "getcapabilities:" + identifier, identifier ) ) )
+    logger.info( s"getCapabilities($identifier): ${cap.toString}" )
+    cap
   }
 
   def describeProcess( identifier: String ): xml.Node = {
@@ -158,11 +164,12 @@ class ServerRequestManager extends Thread with Loggable {
   override def run() {
     logger.info( "Starting webProcessManager with server_address = " + server_address )
     val processManager = if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) }
-    val capabilities = processManager.getCapabilities("cds2", "", Map( "syntax"->response_syntax.toString ) )
     try {
       while (true) {
+        logger.info( "Polling job queue: " + jobQueue.toString )
         Option( jobQueue.poll( 60, TimeUnit.MINUTES ) ) match {
           case Some( jobId ) =>
+            logger.info( "Popped job for exec: " + jobId )
             val result = submitJob( processManager, jobId )
           case None => Unit
         }
@@ -187,7 +194,8 @@ class ServerRequestManager extends Thread with Loggable {
         val rId: String = RandomStringUtils.random (6, true, true)
         val executionCallback: ExecutionCallback = new ExecutionCallback {
           override def execute (jobId: String, response: WPSResponse): Unit = {
-            jobCompleted( jobId, response.toXml( response_syntax ) )
+            val responseId = jobId.split('-').last
+            jobCompleted( responseId, response.toXml( response_syntax ) )
           }
         }
         val response: xml.Node = processMgr.executeProcess (job, Some (executionCallback) )
