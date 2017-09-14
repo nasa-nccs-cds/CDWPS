@@ -102,13 +102,15 @@ class ServerRequestManager extends Thread with Loggable {
 
   def initialize(): Unit = {
     start()
-    getCapabilities("")
-    getCapabilities("col")
+//    getCapabilities("")
+//    getCapabilities("col")
   }
 
   def getResponse( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
     val sleeptime_ms = 100L
-    if( current_time_msec >= timeout_sec * 1000 ) { throw new Exception( "Timed out waiting for response: " + responseId ) }
+    if( current_time_msec >= timeout_sec * 1000 ) {
+      <error type="InternalServerError"> "Timed out waiting for response: " + responseId </error>
+    }
     responseCache.get( responseId ) match {
       case Some( response ) => return response
       case None =>
