@@ -13,7 +13,7 @@ import nasa.nccs.edas.utilities.appParameters
 import scala.collection.concurrent.TrieMap
 import play.api.Play
 import play.api.mvc._
-import nasa.nccs.esgf.wps.{Job, _}
+import nasa.nccs.esgf.wps.{GenericProcessManager, Job, _}
 import nasa.nccs.utilities.{EDASLogManager, Loggable}
 import nasa.nccs.wps._
 import org.apache.commons.lang.RandomStringUtils
@@ -80,6 +80,32 @@ class WPS extends Controller {
       case e: Exception => InternalServerError(e.getMessage).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
     }
   }
+
+  def getResultFile(id: String, service: String) = Action {
+    try {
+      serverRequestManager.getResultFilePath(service, id) match {
+        case Some(resultFilePath: String) =>
+          logger.info(s"WPS getResult: resultFilePath=$resultFilePath")
+          Ok.sendFile(new File(resultFilePath)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+        case None =>
+          NotFound("Result not yet available").withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+      }
+    } catch {
+      case e: Exception =>
+        InternalServerError(e.getMessage)
+          .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    }
+  }
+
+  def getResult(id: String, service: String) = Action {
+    try {
+      val result = serverRequestManager.getResult(service, id, ResponseSyntax.WPS )
+      Ok(result).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    } catch {
+      case e: Exception =>  InternalServerError(e.getMessage) .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    }
+  }
+
 }
 
 class ServerRequestManager extends Thread with Loggable {
@@ -93,6 +119,20 @@ class ServerRequestManager extends Thread with Loggable {
   appParameters.addConfigParams(config)
   val server_address = config.getOrElse( "edas.server.address", "" )
   val response_syntax: ResponseSyntax.Value = ResponseSyntax.fromString( config.getOrElse( "edas.response.syntax", "wps" ) )
+  protected var processManager: Option[GenericProcessManager] = None
+
+  def getResultFilePath( service: String, resultId: String ): Option[String] = processManager match {
+    case Some( procMgr ) => procMgr.getResultFilePath( service, resultId )
+    case None => throw new Exception( "Attempt to access undefined ProcessManager")
+  }
+  def getResult( service: String, resultId: String, response_syntax: ResponseSyntax.Value ): xml.Node= processManager match {
+    case Some( procMgr ) => procMgr.getResult( service, resultId, response_syntax )
+    case None => throw new Exception( "Attempt to access undefined ProcessManager")
+  }
+  def getResultStatus( service: String, resultId: String, response_syntax: ResponseSyntax.Value ): xml.Node= processManager match {
+    case Some( procMgr ) => procMgr.getResultStatus( service, resultId, response_syntax )
+    case None => throw new Exception( "Attempt to access undefined ProcessManager")
+  }
 
   def addJob( job: Job ): Unit = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
@@ -109,7 +149,7 @@ class ServerRequestManager extends Thread with Loggable {
   def getResponse( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
     val sleeptime_ms = 100L
     val response = if( current_time_msec >= timeout_sec * 1000 ) {
-      <error type="InternalServerError"> "Timed out waiting for response: " + responseId </error>
+      <error type="InternalServerError" rid={responseId}>  Timed out waiting for response </error>
     } else {
       responseCache.get(responseId) match {
         case Some(response) => return response
@@ -140,9 +180,13 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
   def getCapabilities( identifier: String ): xml.Node = {
-    val cap = capabilitiesCache.getOrElseUpdate( identifier, executeJob( new Job( "getcapabilities:" + identifier, identifier ) ) )
-    logger.info( s"getCapabilities($identifier): ${cap.toString}" )
-    cap
+    capabilitiesCache.get( identifier ) match {
+      case Some( cap ) => cap
+      case None =>
+        val cap = executeJob( new Job( "getcapabilities:" + identifier, identifier ) )
+        if( !cap.label.toLowerCase.contains("error") ) { capabilitiesCache.put( identifier, cap ) }
+        cap
+    }
   }
 
   def describeProcess( identifier: String ): xml.Node = {
@@ -163,14 +207,14 @@ class ServerRequestManager extends Thread with Loggable {
 
   override def run() {
     logger.info( "Starting webProcessManager with server_address = " + server_address )
-    val processManager = if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) }
+    processManager = Some( if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) } )
     try {
       while (true) {
         logger.info( "Polling job queue: " + jobQueue.toString )
         Option( jobQueue.poll( 60, TimeUnit.MINUTES ) ) match {
           case Some( jobId ) =>
             logger.info( "Popped job for exec: " + jobId )
-            val result = submitJob( processManager, jobId )
+            val result = submitJob( processManager.get, jobId )
           case None => Unit
         }
       }
