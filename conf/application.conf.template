@@ -21,6 +21,7 @@ edas.server.port.request=5670
 edas.server.port.response=5671
 edas.cache.dir="/dataportal01/edas/config"
 edas.publish.dir="/dataportal01/edas/cache"
+wps.server.proxy.href="http://localhost:9001/wps"
 
 // Use: >> sbt "run 5327"
 
