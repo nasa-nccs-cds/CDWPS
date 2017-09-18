@@ -166,6 +166,7 @@ class ServerRequestManager extends Thread with Loggable {
     val sleeptime_ms = 100L
     val timeout_ms =  timeout_sec * 1000
     var  current_time_msec: Long = 0L
+    logger.info(s"getResponse($responseId): Waiting ")
     while( current_time_msec < timeout_ms) {
       responseCache.get(responseId) match {
         case Some(response) =>
@@ -174,7 +175,7 @@ class ServerRequestManager extends Thread with Loggable {
         case None =>
           Thread.sleep(sleeptime_ms)
           current_time_msec = current_time_msec + sleeptime_ms
-          logger.info(s"getResponse($responseId): Waiting, current time = ${current_time_msec} ms")
+          logger.info(".",false)
       }
     }
     logger.info(s"getResponse($responseId): Timed Out, current time = ${current_time_msec} ms, responses = {${responseCache.keys.mkString(", ")}}")
