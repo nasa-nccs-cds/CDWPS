@@ -142,8 +142,8 @@ class ServerRequestManager extends Thread with Loggable {
 
   def initialize(): Unit = {
     start()
-    getCapabilities("")
-    getCapabilities("col")
+//    getCapabilities("")
+//    getCapabilities("col")
   }
 
   def getResponseR( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
