@@ -106,7 +106,7 @@ class ServerRequestManager extends Thread with Loggable {
     getCapabilities("col")
   }
 
-  def getResponse( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
+  def getResponseR( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
     val sleeptime_ms = 100L
     val response = if( current_time_msec >= timeout_sec * 1000 ) {
       <error type="InternalServerError"> "Timed out waiting for response: " + responseId </error>
@@ -115,12 +115,32 @@ class ServerRequestManager extends Thread with Loggable {
         case Some(response) => return response
         case None =>
           Thread.sleep(sleeptime_ms)
-          getResponse(responseId, timeout_sec, current_time_msec + sleeptime_ms)
+          getResponseR(responseId, timeout_sec, current_time_msec + sleeptime_ms)
       }
     }
     logger.info( s"getResponse($responseId): ${response.toString}" )
     response
   }
+
+  def getResponse( responseId: String, timeout_sec: Int ): xml.Node = {
+    val sleeptime_ms = 100L
+    val timeout_ms =  timeout_sec * 1000
+    var  current_time_msec: Long = 0L
+    while( current_time_msec < timeout_ms) {
+      responseCache.get(responseId) match {
+        case Some(response) =>
+          logger.info(s"getResponse($responseId): ${response.toString}")
+          return response
+        case None =>
+          Thread.sleep(sleeptime_ms)
+          current_time_msec = current_time_msec + sleeptime_ms
+          logger.info(s"getResponse($responseId): Waiting, current time = ${current_time_msec} ms")
+      }
+    }
+    logger.info(s"getResponse($responseId): Timed Out, current time = ${current_time_msec} ms, responses = {${responseCache.keys.mkString(", ")}}")
+    <error type="InternalServerError">"Timed out waiting for response: " + responseId</error>
+  }
+
 
   def executeJob( job: Job, timeout_sec: Int = 180 ): xml.Node = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
