@@ -137,7 +137,7 @@ class ServerRequestManager extends Thread with Loggable {
   def addJob( job: Job ): Unit = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
     jobQueue.put( job.requestId )
-    logger.info( "Adding job to job queue: " + job.requestId )
+    logger.info( s"Addied job ${job.requestId} to job queue, nJobs = ${jobQueue.size()}"  )
   }
 
   def initialize(): Unit = {
@@ -158,7 +158,8 @@ class ServerRequestManager extends Thread with Loggable {
           getResponseR(responseId, timeout_sec, current_time_msec + sleeptime_ms)
       }
     }
-    logger.info( s"getResponse($responseId): ${response.toString}" )
+    val message = response.toString
+    logger.info( s"EDASWebApp:getResponse($responseId), Sample: ${message.substring(0,Math.min(0,message.length))}" )
     response
   }
 
@@ -166,11 +167,12 @@ class ServerRequestManager extends Thread with Loggable {
     val sleeptime_ms = 100L
     val timeout_ms =  timeout_sec * 1000
     var  current_time_msec: Long = 0L
-    logger.info(s"getResponse($responseId): Waiting ")
+    logger.info(s"EDASWebApp:getResponse($responseId): Waiting ")
     while( current_time_msec < timeout_ms) {
       responseCache.get(responseId) match {
         case Some(response) =>
-          logger.info(s"getResponse($responseId): ${response.toString}")
+          val message = response.toString
+          logger.info( s"EDASWebApp:getResponse($responseId), Sample: ${message.substring(0,Math.min(0,message.length))}" )
           return response
         case None =>
           Thread.sleep(sleeptime_ms)
@@ -178,20 +180,20 @@ class ServerRequestManager extends Thread with Loggable {
           logger.info(".",false)
       }
     }
-    logger.info(s"getResponse($responseId): Timed Out, current time = ${current_time_msec} ms, responses = {${responseCache.keys.mkString(", ")}}")
+    logger.info(s"EDASWebApp:getResponse($responseId): Timed Out, current time = ${current_time_msec} ms, responses = {${responseCache.keys.mkString(", ")}}")
     <error type="InternalServerError">"Timed out waiting for response: " + responseId</error>
   }
 
 
   def executeJob( job: Job, timeout_sec: Int = 180 ): xml.Node = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
-    logger.info( "executeJob: " + job.requestId  )
+    logger.info( "EDASWebApp:executeJob: " + job.requestId  )
     jobQueue.put( job.requestId )
     getResponse( job.requestId, 180 )
   }
 
   def updateJobStatus( requestId: String, status: StatusValue.Value ): Job = {
-    logger.info( "updateJobStatus: " + requestId + ", status = " + status.toString )
+    logger.info( "EDASWebApp:updateJobStatus: " + requestId + ", status = " + status.toString )
     jobDirectory.get( requestId ) match {
       case Some( jobStatus ) =>
         jobStatus.setStatus( status )
@@ -231,12 +233,12 @@ class ServerRequestManager extends Thread with Loggable {
     processManager = Some( if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) } )
     try {
       while (true) {
-        logger.info( "Polling job queue: " + jobQueue.toString )
-        Option( jobQueue.poll( 60, TimeUnit.MINUTES ) ) match {
+        logger.info( "EDASWebApp:Polling job queue: " + jobQueue.toString )
+        Option( jobQueue.poll( 1, TimeUnit.MINUTES ) ) match {
           case Some( jobId ) =>
-            logger.info( "Popped job for exec: " + jobId )
+            logger.info( "EDASWebApp:Popped job for exec: " + jobId )
             val result = submitJob( processManager.get, jobId )
-          case None => Unit
+          case None => logger.info( s"EDASWebApp: Looking for jobs in queue, nJobs = ${jobQueue.size()}" )
         }
       }
     } catch {
