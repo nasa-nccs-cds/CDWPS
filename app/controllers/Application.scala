@@ -3,7 +3,7 @@ package controllers
 import org.slf4j.LoggerFactory
 import play.api._
 import java.io.File
-
+import scala.xml.XML
 import nasa.nccs.edas.engine.ExecutionCallback
 import java.util.concurrent.{PriorityBlockingQueue, TimeUnit}
 
@@ -171,9 +171,10 @@ class ServerRequestManager extends Thread with Loggable {
     while( current_time_msec < timeout_ms) {
       responseCache.get(responseId) match {
         case Some(response) =>
-          val message = response.toString
+          val raw_message = response.toString
+          val message = insertParameterRefs( raw_message )
           logger.info( s"EDASWebApp:getResponse($responseId), Sample: ${message.substring(0,Math.min(0,message.length))}" )
-          return response
+          return  XML.loadString(message)
         case None =>
           Thread.sleep(sleeptime_ms)
           current_time_msec = current_time_msec + sleeptime_ms
@@ -182,6 +183,19 @@ class ServerRequestManager extends Thread with Loggable {
     }
     logger.info(s"EDASWebApp:getResponse($responseId): Timed Out, current time = ${current_time_msec} ms, responses = {${responseCache.keys.mkString(", ")}}")
     <error type="InternalServerError">"Timed out waiting for response: " + responseId</error>
+  }
+
+  def insertParameterRefs( message: String ): String = {
+    val pattern = "\${[A-Z0-9a-z]+}".r
+    var newMessage = message
+    pattern.findAllIn( message ).foreach( parmRef => {
+      val parm = parmRef.substring(2,parmRef.length-1)
+      appParameters(parm) match {
+        case Some( pval ) => newMessage = newMessage.replaceAllLiterally(parmRef,pval)
+        case None => logger.warn( s"Can't find parameter '${parm}' in application configuration.")
+      }
+    })
+    newMessage
   }
 
 
