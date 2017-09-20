@@ -186,7 +186,7 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
   def insertParameterRefs( message: String ): String = {
-    val pattern = "${[A-Z0-9a-z]+}".r
+    val pattern = "${[A-Z0-9a-z._]+}".r
     var newMessage = message
     pattern.findAllIn( message ).foreach( parmRef => {
       val parm = parmRef.substring(2,parmRef.length-1)
