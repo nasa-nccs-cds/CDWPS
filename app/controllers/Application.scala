@@ -201,7 +201,7 @@ class ServerRequestManager extends Thread with Loggable {
 
   def executeJob( job: Job, timeout_sec: Int = 180 ): xml.Node = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
-    logger.info( "EDAS--WebApp:executeJob: " + job.requestId  )
+    logger.info( "EDAS--WebApp:executeJob: " + job.requestId  + ", EDAS libs logging to: " + EDASLogManager.getCurrentLogger().logFilePath.toString )
     jobQueue.put( job.requestId )
     getResponse( job.requestId, 180 )
   }
