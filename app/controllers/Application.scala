@@ -201,7 +201,7 @@ class ServerRequestManager extends Thread with Loggable {
 
   def executeJob( job: Job, timeout_sec: Int = 180 ): xml.Node = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
-    logger.info( "EDASW::executeJob: " + job.requestId  + ", EDAS libs logging to: " + EDASLogManager.getCurrentLogger().logFilePath.toString )
+    logger.info( "EDASW::executeJob: " + job.requestId  )
     jobQueue.put( job.requestId )
     getResponse( job.requestId, 180 )
   }
@@ -243,7 +243,7 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
   override def run() {
-    logger.info( "Starting webProcessManager with server_address = " + server_address )
+    logger.info( "EDASW: Starting webProcessManager with server_address = " + server_address + ", EDAS libs logging to: " + EDASLogManager.getCurrentLogger().logFilePath.toString )
     processManager = Some( if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) } )
     try {
       while (true) {
