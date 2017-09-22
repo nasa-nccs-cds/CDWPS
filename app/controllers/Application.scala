@@ -36,6 +36,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
   lifecycle.addStopHook( { () => Future( term() ) } )
 
   def term(): Unit = {
+    logger.info( "\n ------------------------- EDASW: Context SHUTDOWN ----------------------------------- \n" )
     serverRequestManager.term()
     logger.close()
   }
