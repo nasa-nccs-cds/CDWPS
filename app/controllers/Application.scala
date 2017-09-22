@@ -31,14 +31,18 @@ case class WPSJobStatus( job: Job ) {
 class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Loggable {
   val play_app = current;
   val printer = new scala.xml.PrettyPrinter(200, 3)
+  logger.info( "\n ------------------------- EDASW: Application STARTUP ----------------------------------- \n" + lifecycle. )
   val serverRequestManager = new ServerRequestManager()
   serverRequestManager.initialize()
-  lifecycle.addStopHook( { () => Future( term() ) } )
+  lifecycle.addStopHook( { () => term() } )
 
-  def term(): Unit = {
-    logger.info( "\n ------------------------- EDASW: Context SHUTDOWN ----------------------------------- \n" )
-    serverRequestManager.term()
-    logger.close()
+  def term(): Future[Unit] = {
+    try {
+      logger.info("\n ------------------------- EDASW: Application SHUTDOWN ----------------------------------- \n")
+      serverRequestManager.term()
+      logger.close()
+      Future.successful()
+    } catch { case err: Exception => Future.failed(err) }
   }
 
   def execute(version: String, request: String, identifier: String, storeExecuteResponse: String, status: String, datainputs: String) = Action {
