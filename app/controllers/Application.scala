@@ -4,6 +4,7 @@ package controllers
 import play.api._
 import java.io.File
 import play.api.Play.current
+import scala.xml.XML
 import nasa.nccs.edas.engine.ExecutionCallback
 import java.util.concurrent.{PriorityBlockingQueue, TimeUnit}
 import scala.concurrent.Future
@@ -151,16 +152,16 @@ class ServerRequestManager extends Thread with Loggable {
   def addJob( job: Job ): Unit = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
     jobQueue.put( job.requestId )
-    logger.info( "Adding job to job queue: " + job.requestId )
+    logger.info( s"EDASW:Added job ${job.requestId} to job queue, nJobs = ${jobQueue.size()}"  )
   }
 
   def initialize(): Unit = {
     start()
-    getCapabilities("")
-    getCapabilities("col")
+//    getCapabilities("")
+//    getCapabilities("col")
   }
 
-  def getResponse( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
+  def getResponseR( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
     val sleeptime_ms = 100L
     val response = if( current_time_msec >= timeout_sec * 1000 ) {
       <error type="InternalServerError" rid={responseId}>  Timed out waiting for response </error>
@@ -169,22 +170,59 @@ class ServerRequestManager extends Thread with Loggable {
         case Some(response) => return response
         case None =>
           Thread.sleep(sleeptime_ms)
-          getResponse(responseId, timeout_sec, current_time_msec + sleeptime_ms)
+          getResponseR(responseId, timeout_sec, current_time_msec + sleeptime_ms)
       }
     }
-    logger.info( s"getResponse($responseId): ${response.toString}" )
+    val message = response.toString
+    logger.info( s"EDASW::getResponse($responseId), Sample: ${message.substring(0,Math.min(0,message.length))}" )
     response
   }
 
+  def getResponse( responseId: String, timeout_sec: Int ): xml.Node = {
+    val sleeptime_ms = 100L
+    val timeout_ms =  timeout_sec * 1000
+    var  current_time_msec: Long = 0L
+    logger.info(s"EDASW::getResponse($responseId): Waiting ")
+    while( current_time_msec < timeout_ms) {
+      responseCache.get(responseId) match {
+        case Some(response) =>
+          val raw_message = response.toString
+          val message = insertParameterRefs( raw_message )
+          logger.info( s"EDASW::getResponse($responseId), Sample: ${message.substring(0,Math.min(0,message.length))}" )
+          return  XML.loadString(message)
+        case None =>
+          Thread.sleep(sleeptime_ms)
+          current_time_msec = current_time_msec + sleeptime_ms
+          logger.info(".",false)
+      }
+    }
+    logger.info(s"EDASW::getResponse($responseId): Timed Out, current time = ${current_time_msec} ms, responses = {${responseCache.keys.mkString(", ")}}")
+    <error type="InternalServerError">"Timed out waiting for response: " + responseId</error>
+  }
+
+  def insertParameterRefs( message: String ): String = {
+    val pattern = "${[A-Z0-9a-z._]+}".r
+    var newMessage = message
+    pattern.findAllIn( message ).foreach( parmRef => {
+      val parm = parmRef.substring(2,parmRef.length-1)
+      appParameters(parm) match {
+        case Some( pval ) => newMessage = newMessage.replaceAllLiterally(parmRef,pval)
+        case None => logger.warn( s"Can't find parameter '${parm}' in application configuration.")
+      }
+    })
+    newMessage
+  }
+
+
   def executeJob( job: Job, timeout_sec: Int = 180 ): xml.Node = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
-    logger.info( "executeJob: " + job.requestId  )
+    logger.info( "EDASW::executeJob: " + job.requestId  )
     jobQueue.put( job.requestId )
     getResponse( job.requestId, 180 )
   }
 
   def updateJobStatus( requestId: String, status: StatusValue.Value ): Job = {
-    logger.info( "updateJobStatus: " + requestId + ", status = " + status.toString )
+    logger.info( "EDASW::updateJobStatus: " + requestId + ", status = " + status.toString )
     jobDirectory.get( requestId ) match {
       case Some( jobStatus ) =>
         jobStatus.setStatus( status )
@@ -220,16 +258,16 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
   override def run() {
-    logger.info( "Starting webProcessManager with server_address = " + server_address )
+    logger.info( "EDASW: Starting webProcessManager with server_address = " + server_address + ", EDAS libs logging to: " + EDASLogManager.getCurrentLogger().logFilePath.toString )
     processManager = Some( if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) } )
     try {
-      while ( _active ) {
-        logger.info( "Polling job queue: " + jobQueue.toString )
-        Option( jobQueue.poll( 60, TimeUnit.MINUTES ) ) match {
+      while (_active) {
+        logger.info( "EDASW::Polling job queue: " + jobQueue.toString )
+        Option( jobQueue.poll( 1, TimeUnit.MINUTES ) ) match {
           case Some( jobId ) =>
-            logger.info( "Popped job for exec: " + jobId )
+            logger.info( "EDASW::Popped job for exec: " + jobId )
             val result = submitJob( processManager.get, jobId )
-          case None => Unit
+          case None => logger.info( s"EDASW:: Looking for jobs in queue, nJobs = ${jobQueue.size()}" )
         }
       }
     } catch {
