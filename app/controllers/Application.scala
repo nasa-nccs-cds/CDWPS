@@ -31,7 +31,7 @@ case class WPSJobStatus( job: Job ) {
 class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Loggable {
   val play_app = current;
   val printer = new scala.xml.PrettyPrinter(200, 3)
-  logger.info( "\n ------------------------- EDASW: Application STARTUP ----------------------------------- \n" + lifecycle. )
+  logger.info( "\n ------------------------- EDASW: Application STARTUP ----------------------------------- \n" )
   val serverRequestManager = new ServerRequestManager()
   serverRequestManager.initialize()
   lifecycle.addStopHook( { () => term() } )
