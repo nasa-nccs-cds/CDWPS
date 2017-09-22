@@ -1,22 +1,24 @@
 package controllers
 
-import org.slf4j.LoggerFactory
+
 import play.api._
 import java.io.File
-
+import play.api.Play.current
 import nasa.nccs.edas.engine.ExecutionCallback
 import java.util.concurrent.{PriorityBlockingQueue, TimeUnit}
-
-import nasa.nccs.esgf.process.TaskRequest
+import scala.concurrent.Future
+import javax.inject._
+import play.api.inject.ApplicationLifecycle
 import nasa.nccs.edas.utilities.appParameters
-
 import scala.collection.concurrent.TrieMap
 import play.api.Play
 import play.api.mvc._
 import nasa.nccs.esgf.wps.{GenericProcessManager, Job, _}
+import scala.concurrent.ExecutionContext.Implicits.global
 import nasa.nccs.utilities.{EDASLogManager, Loggable}
 import nasa.nccs.wps._
 import org.apache.commons.lang.RandomStringUtils
+
 
 object StatusValue extends Enumeration { val QUEUED, EXECUTING, COMPLETED, UNDEFINED = Value }
 case class WPSJobStatus( job: Job ) {
@@ -25,11 +27,17 @@ case class WPSJobStatus( job: Job ) {
   def getStatus: StatusValue.Value = { _status }
 }
 
-class WPS extends Controller {
-  val logger = EDASLogManager.getCurrentLogger;
+class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Loggable {
+  val play_app = current;
   val printer = new scala.xml.PrettyPrinter(200, 3)
   val serverRequestManager = new ServerRequestManager()
   serverRequestManager.initialize()
+  lifecycle.addStopHook( { () => Future( term() ) } )
+
+  def term(): Unit = {
+    serverRequestManager.term()
+    logger.close()
+  }
 
   def execute(version: String, request: String, identifier: String, storeExecuteResponse: String, status: String, datainputs: String) = Action {
     try {
@@ -111,6 +119,7 @@ class WPS extends Controller {
 class ServerRequestManager extends Thread with Loggable {
   val jobQueue = new PriorityBlockingQueue[String]()
   val jobDirectory = TrieMap.empty[String,WPSJobStatus]
+  private var _active = true;
   val capabilitiesCache = TrieMap.empty[String,xml.Node]
   val processesCache = TrieMap.empty[String,xml.Node]
   val responseCache = TrieMap.empty[String,xml.Node]
@@ -120,6 +129,11 @@ class ServerRequestManager extends Thread with Loggable {
   val server_address = config.getOrElse( "edas.server.address", "" )
   val response_syntax: ResponseSyntax.Value = ResponseSyntax.fromString( config.getOrElse( "edas.response.syntax", "wps" ) )
   protected var processManager: Option[GenericProcessManager] = None
+
+  def term() = {
+    _active = false;
+    processManager.map( _.term() )
+  }
 
   def getResultFilePath( service: String, resultId: String ): Option[String] = processManager match {
     case Some( procMgr ) => procMgr.getResultFilePath( service, resultId )
@@ -209,7 +223,7 @@ class ServerRequestManager extends Thread with Loggable {
     logger.info( "Starting webProcessManager with server_address = " + server_address )
     processManager = Some( if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) } )
     try {
-      while (true) {
+      while ( _active ) {
         logger.info( "Polling job queue: " + jobQueue.toString )
         Option( jobQueue.poll( 60, TimeUnit.MINUTES ) ) match {
           case Some( jobId ) =>
