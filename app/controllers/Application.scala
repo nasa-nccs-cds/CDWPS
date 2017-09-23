@@ -292,7 +292,6 @@ class ServerRequestManager extends Thread with Loggable {
         val runargs = Map ("responseform" -> "wps", "storeExecuteResponse" -> "true", "status" -> "false", "mode" -> "file")
         logger.info (s"\n\nWPS EXECUTE: identifier=${job.identifier}, runargs=$runargs, datainputs=${job.datainputs}\n\n")
         val parsed_data_inputs = wpsObjectParser.parseDataInputs (job.datainputs)
-        val rId: String = RandomStringUtils.random (6, true, true)
         val executionCallback: ExecutionCallback = new ExecutionCallback {
           override def execute (jobId: String, response: WPSResponse): Unit = {
             val responseId = jobId.split('-').last
