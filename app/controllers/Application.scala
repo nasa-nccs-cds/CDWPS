@@ -45,9 +45,10 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
     } catch { case err: Exception => Future.failed(err) }
   }
 
-  def execute(version: String, request: String, identifier: String, storeExecuteResponse: String, status: String, datainputs: String) = Action {
+  def execute(request: String, identifier: String, datainputs: String) = Action {
     try {
-
+      val storeExecuteResponse: String = "true";
+      val status: String = "false";
       request.toLowerCase match {
         case "getcapabilities" =>
           Ok( serverRequestManager.getCapabilities( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -289,8 +290,7 @@ class ServerRequestManager extends Thread with Loggable {
       case jobId if jobId.startsWith("describeprocess") =>
         jobCompleted( jobId, processMgr.describeProcess( "cds2", job.identifier, job.runargs ) )
       case _ =>
-        val runargs = Map ("responseform" -> "wps", "storeExecuteResponse" -> "true", "status" -> "false", "mode" -> "file")
-        logger.info (s"\n\nWPS EXECUTE: identifier=${job.identifier}, runargs=$runargs, datainputs=${job.datainputs}\n\n")
+        logger.info (s"\n\nWPS EXECUTE: identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
         val parsed_data_inputs = wpsObjectParser.parseDataInputs (job.datainputs)
         val executionCallback: ExecutionCallback = new ExecutionCallback {
           override def execute (jobId: String, response: WPSResponse): Unit = {
@@ -298,7 +298,7 @@ class ServerRequestManager extends Thread with Loggable {
             jobCompleted( responseId, response.toXml( response_syntax ) )
           }
         }
-        val response: xml.Node = processMgr.executeProcess (job, Some (executionCallback) )
+        val response: xml.Node = processMgr.executeProcess( job, Some (executionCallback) )
         logger.info ("Completed request '%s' in %.4f sec".format (job.identifier, (System.nanoTime () - t0) / 1.0E9) )
         response
     }

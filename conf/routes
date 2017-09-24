@@ -6,7 +6,7 @@ GET     /assets/*file            controllers.Assets.versioned(path="/public", fi
 GET     /cwt/file                controllers.WPS.getResultFile( id: String, service: String ?= "cds2" )
 GET     /cwt/result              controllers.WPS.getResult( id: String, service: String ?= "cds2" )
 GET     /cwt/status              controllers.WPS.getResultStatus( id: String )
-GET     /cwt                     controllers.WPS.execute( version: String ?= "1.0.0", request: String, identifier: String ?= "", storeExecuteResponse: String ?= "true", status: String ?= "false", datainputs: String ?= "" )
+GET     /cwt                     controllers.WPS.execute( request: String, identifier: String ?= "", datainputs: String ?= "" )
 
 GET     /count                   demo.HelloController.count
 
