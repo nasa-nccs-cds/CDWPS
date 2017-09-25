@@ -57,10 +57,11 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
         case "execute" =>
           val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase)
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
-          val requestId: String = RandomStringUtils.random(6, true, true)
-          val job = Job( requestId, identifier, datainputs, runargs )
+          val jobId: String = runargs.getOrElse( "jobId", RandomStringUtils.random(8, true, true) )
+          logger.info( s"Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
+          val job = Job( jobId, identifier, datainputs, runargs )
           serverRequestManager.addJob(job)
-          val response = createResponse( requestId )
+          val response = createResponse( jobId )
           Ok(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
       }
     } catch {
