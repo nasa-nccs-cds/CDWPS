@@ -48,7 +48,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
   def execute(request: String, identifier: String, datainputs: String) = Action {
     try {
       val storeExecuteResponse: String = "true";
-      val status: String = "false";
+      val status: String = "true";
       request.toLowerCase match {
         case "getcapabilities" =>
           Ok( serverRequestManager.getCapabilities( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -130,6 +130,7 @@ class ServerRequestManager extends Thread with Loggable {
   val capabilitiesCache = TrieMap.empty[String,xml.Node]
   val processesCache = TrieMap.empty[String,xml.Node]
   val responseCache = TrieMap.empty[String,xml.Node]
+  var active: Boolean = true;
   val config: Map[String, String] = serverConfiguration
   appParameters.setCustomCacheDir( config.getOrElse( "edas.cache.dir", "" ) )
   appParameters.addConfigParams(config)
@@ -138,7 +139,7 @@ class ServerRequestManager extends Thread with Loggable {
   protected var processManager: Option[GenericProcessManager] = None
 
   def term() = {
-    _active = false;
+    active = false;
     processManager.map( _.term() )
   }
 
@@ -155,6 +156,8 @@ class ServerRequestManager extends Thread with Loggable {
     case None => throw new Exception( "Attempt to access undefined ProcessManager")
   }
 
+  def deactivate = { active = false; }
+
   def addJob( job: Job ): Unit = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
     jobQueue.put( job.requestId )
@@ -162,6 +165,7 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
   def initialize(): Unit = {
+    setDaemon(true)
     start()
 //    getCapabilities("")
 //    getCapabilities("col")
@@ -267,7 +271,7 @@ class ServerRequestManager extends Thread with Loggable {
     logger.info( "EDASW: Starting webProcessManager with server_address = " + server_address + ", EDAS libs logging to: " + EDASLogManager.getCurrentLogger().logFilePath.toString )
     processManager = Some( if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) } )
     try {
-      while (_active) {
+      while ( active ) {
         logger.info( "EDASW::Polling job queue: " + jobQueue.toString )
         Option( jobQueue.poll( 1, TimeUnit.MINUTES ) ) match {
           case Some( jobId ) =>
