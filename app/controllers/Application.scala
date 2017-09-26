@@ -48,7 +48,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
   def execute(request: String, identifier: String, datainputs: String) = Action {
     try {
       val storeExecuteResponse: String = "true";
-      val status: String = "true";
+      val status: String = "false";
       request.toLowerCase match {
         case "getcapabilities" =>
           Ok( serverRequestManager.getCapabilities( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -224,13 +224,15 @@ class ServerRequestManager extends Thread with Loggable {
     newMessage
   }
 
-
   def executeJob( job: Job, timeout_sec: Int = 180 ): xml.Node = {
     jobDirectory += ( job.requestId -> WPSJobStatus(job) )
     logger.info( "EDASW::executeJob: " + job.requestId  )
     jobQueue.put( job.requestId )
     getResponse( job.requestId, 180 )
   }
+
+  def jobsExecuting: Boolean = jobDirectory.values.exists( _.getStatus == StatusValue.EXECUTING )
+  def waitUntilAllJobsComplete = { while ( active && jobsExecuting ) { Thread.sleep( 100 ) } }
 
   def updateJobStatus( requestId: String, status: StatusValue.Value ): Job = {
     logger.info( "EDASW::updateJobStatus: " + requestId + ", status = " + status.toString )
@@ -278,6 +280,7 @@ class ServerRequestManager extends Thread with Loggable {
           case Some( jobId ) =>
             logger.info( "EDASW::Popped job for exec: " + jobId )
             val result = submitJob( processManager.get, jobId )
+//            waitUntilAllJobsComplete
           case None => logger.info( s"EDASW:: Looking for jobs in queue, nJobs = ${jobQueue.size()}" )
         }
       }
@@ -300,7 +303,9 @@ class ServerRequestManager extends Thread with Loggable {
         val executionCallback: ExecutionCallback = new ExecutionCallback {
           override def execute ( response: WPSResponse ): Unit = {
             val responseId = jobId.split('-').last
-            jobCompleted( responseId, response.toXml( response_syntax ) )
+            val response_xml = response.toXml( response_syntax )
+            logger.info (s"\nEXECUTE Callback: responseId=${responseId}, jobId=${jobId}, response=${response_xml.toString}\n")
+            jobCompleted( responseId, response_xml )
           }
         }
         val response: xml.Node = processMgr.executeProcess( job, Some (executionCallback) )
