@@ -51,6 +51,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
       val status: String = "false";
       request.toLowerCase match {
         case "getcapabilities" =>
+          logger.info(s"getcapabilities: identifier = ${identifier}")
           Ok( serverRequestManager.getCapabilities( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "describeprocess" =>
           Ok( serverRequestManager.describeProcess( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -245,6 +246,7 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
   def getCapabilities( identifier: String ): xml.Node = {
+    logger.info( "EDASW::getCapabilities, cache = " + capabilitiesCache.mkString("; ") )
     capabilitiesCache.get( identifier ) match {
       case Some( cap ) => cap
       case None =>
