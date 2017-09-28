@@ -21,7 +21,7 @@ import nasa.nccs.wps._
 import org.apache.commons.lang.RandomStringUtils
 
 
-object StatusValue extends Enumeration { val QUEUED, EXECUTING, COMPLETED, UNDEFINED = Value }
+object StatusValue extends Enumeration { val QUEUED, EXECUTING, COMPLETED, ERROR, UNDEFINED = Value }
 case class WPSJobStatus( job: Job ) {
   private var _status: StatusValue.Value = StatusValue.QUEUED
   def setStatus( status: StatusValue.Value ): Unit = { _status = status }
@@ -296,9 +296,9 @@ class ServerRequestManager extends Thread with Loggable {
     val job = updateJobStatus( jobId, StatusValue.EXECUTING )
     job.requestId.toLowerCase match {
       case jobId if jobId.startsWith("getcapabilities") =>
-        jobCompleted( jobId, processMgr.getCapabilities( "cds2", job.identifier, job.runargs ) )
+        jobCompleted( jobId, processMgr.getCapabilities( "cds2", job.identifier, job.runargs ), true )
       case jobId if jobId.startsWith("describeprocess") =>
-        jobCompleted( jobId, processMgr.describeProcess( "cds2", job.identifier, job.runargs ) )
+        jobCompleted( jobId, processMgr.describeProcess( "cds2", job.identifier, job.runargs ), true )
       case _ =>
         logger.info (s"\n\nWPS EXECUTE: identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
         val parsed_data_inputs = wpsObjectParser.parseDataInputs (job.datainputs)
@@ -309,7 +309,7 @@ class ServerRequestManager extends Thread with Loggable {
             if( response_xml.toString.toLowerCase.substring(0,20).contains("exception") ) {
               throw new Exception( response_xml.toString )
             } else {
-              jobCompleted(responseId, response_xml)
+              jobCompleted(responseId, response_xml, true )
             }
           }
         }
@@ -320,14 +320,17 @@ class ServerRequestManager extends Thread with Loggable {
   } catch {
     case ex: Throwable =>
       val response_xml = new WPSExceptionReport( ex ).toXml( response_syntax )
-      logger.info (s"\nJob exited with error, jobId=${jobId}, response=${response_xml.toString}\n")
-      jobCompleted( jobId, response_xml )
+      val msg = s"\nJob exited with error, jobId=${jobId}, response=${response_xml.toString}\n"
+      logger.info (msg)
+      print(msg)
+      jobCompleted( jobId, response_xml, false )
       response_xml
   }
 
-  def jobCompleted( jobId: String, results: xml.Node ): xml.Node  = {
+  def jobCompleted( jobId: String, results: xml.Node, success: Boolean ): xml.Node  = {
     responseCache += ( jobId -> results )
-    updateJobStatus ( jobId, StatusValue.COMPLETED )
+    val completion_status = if(success) { StatusValue.COMPLETED } else { StatusValue.ERROR }
+    updateJobStatus ( jobId, completion_status )
     results
   }
 
