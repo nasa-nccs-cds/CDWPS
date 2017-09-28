@@ -306,7 +306,11 @@ class ServerRequestManager extends Thread with Loggable {
           override def execute ( response_xml: xml.Node, success: Boolean ): Unit = {
             val responseId = jobId.split('-').last
             logger.info (s"\nEXECUTE Callback: responseId=${responseId}, jobId=${jobId}, response=${response_xml.toString}\n")
-            jobCompleted( responseId, response_xml )
+            if( response_xml.toString.toLowerCase.substring(0,20).contains("exception") ) {
+              throw new Exception( response_xml.toString )
+            } else {
+              jobCompleted(responseId, response_xml)
+            }
           }
         }
         val response: xml.Node = processMgr.executeProcess( job, Some (executionCallback) )
