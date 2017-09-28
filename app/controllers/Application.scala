@@ -303,7 +303,7 @@ class ServerRequestManager extends Thread with Loggable {
         logger.info (s"\n\nWPS EXECUTE: identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
         val parsed_data_inputs = wpsObjectParser.parseDataInputs (job.datainputs)
         val executionCallback: ExecutionCallback = new ExecutionCallback {
-          override def execute ( response_xml: xml.Node ): Unit = {
+          override def execute ( response_xml: xml.Node, success: Boolean ): Unit = {
             val responseId = jobId.split('-').last
             logger.info (s"\nEXECUTE Callback: responseId=${responseId}, jobId=${jobId}, response=${response_xml.toString}\n")
             jobCompleted( responseId, response_xml )
