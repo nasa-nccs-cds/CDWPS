@@ -313,6 +313,12 @@ class ServerRequestManager extends Thread with Loggable {
         logger.info ("Completed request '%s' in %.4f sec".format (job.identifier, (System.nanoTime () - t0) / 1.0E9) )
         response
     }
+  } catch {
+    case ex: Throwable =>
+      val response_xml = new WPSExceptionReport( ex ).toXml( response_syntax )
+      logger.info (s"\nJob exited with error, jobId=${jobId}, response=${response_xml.toString}\n")
+      jobCompleted( jobId, response_xml )
+      response_xml
   }
 
   def jobCompleted( jobId: String, results: xml.Node ): xml.Node  = {
