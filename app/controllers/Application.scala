@@ -63,7 +63,9 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
           val job = Job( jobId, identifier, datainputs, runargs )
           serverRequestManager.addJob(job)
           val response = createResponse( jobId )
+ //         BadRequest(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
           Ok(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+
       }
     } catch {
       case e: BadRequestException =>
@@ -300,7 +302,7 @@ class ServerRequestManager extends Thread with Loggable {
       case jobId if jobId.startsWith("describeprocess") =>
         jobCompleted( jobId, processMgr.describeProcess( "cds2", job.identifier, job.runargs ), true )
       case _ =>
-        logger.info (s"\n\nWPS EXECUTE: identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
+        logger.info (s"\n\nEDASW::Popped job identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
         val parsed_data_inputs = wpsObjectParser.parseDataInputs (job.datainputs)
         val executionCallback: ExecutionCallback = new ExecutionCallback {
           override def execute ( response_xml: xml.Node, success: Boolean ): Unit = {
