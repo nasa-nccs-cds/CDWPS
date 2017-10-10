@@ -279,15 +279,13 @@ class ServerRequestManager extends Thread with Loggable {
         jobStatus.getStatus match {
           case StatusValue.EXECUTING => new WPSExecuteStatusStarted( "WPS", jobStatus.getReport, requestId )
           case StatusValue.COMPLETED => new WPSExecuteStatusCompleted( "WPS", jobStatus.getReport, requestId )
-          case StatusValue.ERROR =>
-            val report_parts = jobStatus.getReport.split(':')
-            new WPSExecuteStatusError( "WPS", report_parts.head, report_parts.last, requestId )
+          case StatusValue.ERROR =>     new WPSExecuteStatusError( "WPS", jobStatus.getReport, requestId )
           case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", jobStatus.getReport, requestId )
         }
       case None =>
         val msg = "Attempt to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ")
         logger.error( msg )
-        new WPSExecuteStatusError( "WPS", "NonExistentJob", msg, requestId )
+        new WPSExecuteStatusError( "WPS", "NonExistentJob: " + msg, requestId )
     }
     status.toXml( response_syntax )
   }
