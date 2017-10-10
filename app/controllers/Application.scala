@@ -3,18 +3,24 @@ package controllers
 
 import play.api._
 import java.io.File
+
 import play.api.Play.current
+
 import scala.xml.XML
 import nasa.nccs.edas.engine.ExecutionCallback
 import java.util.concurrent.{PriorityBlockingQueue, TimeUnit}
+
 import scala.concurrent.Future
 import javax.inject._
+
 import play.api.inject.ApplicationLifecycle
 import nasa.nccs.edas.utilities.appParameters
+
 import scala.collection.concurrent.TrieMap
 import play.api.Play
 import play.api.mvc._
 import nasa.nccs.esgf.wps.{GenericProcessManager, Job, _}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import nasa.nccs.utilities.{EDASLogManager, Loggable}
 import nasa.nccs.wps._
@@ -23,9 +29,12 @@ import org.apache.commons.lang.RandomStringUtils
 
 object StatusValue extends Enumeration { val QUEUED, EXECUTING, COMPLETED, ERROR, UNDEFINED = Value }
 case class WPSJobStatus( job: Job ) {
+  private var _report: String = ""
   private var _status: StatusValue.Value = StatusValue.QUEUED
   def setStatus( status: StatusValue.Value ): Unit = { _status = status }
   def getStatus: StatusValue.Value = { _status }
+  def setReport( report: String ): Unit = { _report = report }
+  def getReport: String = { _report }
 }
 
 class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Loggable {
@@ -264,14 +273,20 @@ class ServerRequestManager extends Thread with Loggable {
 
 
   def getJobStatus( requestId: String ): xml.Elem = {
-    val status = jobDirectory.get( requestId ) match {
+    val status: WPSResponse = jobDirectory.get( requestId ) match {
       case Some( jobStatus ) =>
-        jobStatus.getStatus
+        jobStatus.getStatus match {
+          case StatusValue.EXECUTING => new WPSExecuteStatusStarted( "WPS", "", requestId )
+          case StatusValue.COMPLETED => new WPSExecuteStatusCompleted( "WPS", "", requestId )
+          case StatusValue.ERROR =>     new WPSExecuteStatusError( "WPS", "", "", requestId )
+          case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", "", requestId )
+        }
       case None =>
-        logger.error( "Attempt to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ") )
-        StatusValue.UNDEFINED
+        val msg = "Attempt to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ")
+        logger.error( msg )
+        new WPSExecuteStatusError( "WPS", "NonExistentJob", msg, requestId )
     }
-    new WPSExecuteStatus( "WPS", status.toString, requestId ).toXml( response_syntax )
+    status.toXml( response_syntax )
   }
 
   override def run() {
