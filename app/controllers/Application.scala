@@ -246,11 +246,12 @@ class ServerRequestManager extends Thread with Loggable {
   def jobsExecuting: Boolean = jobDirectory.values.exists( _.getStatus == StatusValue.EXECUTING )
   def waitUntilAllJobsComplete = { while ( active && jobsExecuting ) { Thread.sleep( 100 ) } }
 
-  def updateJobStatus( requestId: String, status: StatusValue.Value ): Job = {
+  def updateJobStatus( requestId: String, status: StatusValue.Value, report: String  ): Job = {
     logger.info( "EDASW::updateJobStatus: " + requestId + ", status = " + status.toString )
     jobDirectory.get( requestId ) match {
       case Some( jobStatus ) =>
         jobStatus.setStatus( status )
+        jobStatus.setReport( report )
         jobStatus.job
       case None => throw new Exception( "Attempt to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ") )
     }
@@ -276,10 +277,12 @@ class ServerRequestManager extends Thread with Loggable {
     val status: WPSResponse = jobDirectory.get( requestId ) match {
       case Some( jobStatus ) =>
         jobStatus.getStatus match {
-          case StatusValue.EXECUTING => new WPSExecuteStatusStarted( "WPS", "", requestId )
-          case StatusValue.COMPLETED => new WPSExecuteStatusCompleted( "WPS", "", requestId )
-          case StatusValue.ERROR =>     new WPSExecuteStatusError( "WPS", "", "", requestId )
-          case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", "", requestId )
+          case StatusValue.EXECUTING => new WPSExecuteStatusStarted( "WPS", jobStatus.getReport, requestId )
+          case StatusValue.COMPLETED => new WPSExecuteStatusCompleted( "WPS", jobStatus.getReport, requestId )
+          case StatusValue.ERROR =>
+            val report_parts = jobStatus.getReport.split(':')
+            new WPSExecuteStatusError( "WPS", report_parts.head, report_parts.last, requestId )
+          case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", jobStatus.getReport, requestId )
         }
       case None =>
         val msg = "Attempt to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ")
@@ -310,7 +313,7 @@ class ServerRequestManager extends Thread with Loggable {
 
   def submitJob( processMgr: GenericProcessManager, jobId: String ): xml.Node = try {
     val t0 = System.nanoTime()
-    val job = updateJobStatus( jobId, StatusValue.EXECUTING )
+    val job = updateJobStatus( jobId, StatusValue.EXECUTING, "" )
     job.requestId.toLowerCase match {
       case jobId if jobId.startsWith("getcapabilities") =>
         jobCompleted( jobId, processMgr.getCapabilities( "cds2", job.identifier, job.runargs ), true )
@@ -347,7 +350,7 @@ class ServerRequestManager extends Thread with Loggable {
   def jobCompleted( jobId: String, results: xml.Node, success: Boolean ): xml.Node  = {
     responseCache += ( jobId -> results )
     val completion_status = if(success) { StatusValue.COMPLETED } else { StatusValue.ERROR }
-    updateJobStatus ( jobId, completion_status )
+    updateJobStatus ( jobId, completion_status, results.toString )
     results
   }
 
