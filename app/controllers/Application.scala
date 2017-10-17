@@ -321,15 +321,14 @@ class ServerRequestManager extends Thread with Loggable {
         logger.info (s"\n\nEDASW::Popped job identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
         val parsed_data_inputs = wpsObjectParser.parseDataInputs (job.datainputs)
         val executionCallback: ExecutionCallback = new ExecutionCallback {
-          override def execute ( response_xml: xml.Node, success: Boolean ): Unit = {
+          override def success ( response_xml: xml.Node ): Unit = {
             val responseId = jobId.split('-').last
             logger.info (s"\nEXECUTE Callback: responseId=${responseId}, jobId=${jobId}, response=${response_xml.toString}\n")
-            if( response_xml.toString.toLowerCase.substring(0,20).contains("exception") ) {
-              throw new Exception( response_xml.toString )
-            } else {
+            if( response_xml.toString.contains("ExceptionReport") ) { throw new Exception( response_xml.toString ) } else {
               jobCompleted(responseId, response_xml, true )
             }
           }
+          override def failure ( message: String ): Unit = { throw new Exception( message ) }
         }
         val response: xml.Node = processMgr.executeProcess( job, Some (executionCallback) )
         logger.info ("Completed request '%s' in %.4f sec".format (job.identifier, (System.nanoTime () - t0) / 1.0E9) )
