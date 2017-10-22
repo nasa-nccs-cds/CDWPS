@@ -6,7 +6,7 @@ import java.io.File
 
 import play.api.Play.current
 
-import scala.xml.XML
+import scala.xml.{Node, XML}
 import nasa.nccs.edas.engine.ExecutionCallback
 import java.util.concurrent.{PriorityBlockingQueue, TimeUnit}
 
@@ -68,7 +68,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
           val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "response" -> "file" )
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val jobId: String = runargs.getOrElse( "jobId", RandomStringUtils.random(8, true, true) )
-          logger.info( s"Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
+          logger.info( s"Received WPS Request: Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
           val job = Job( jobId, identifier, datainputs, runargs )
           serverRequestManager.addJob(job)
           val response = createResponse( jobId )
@@ -325,7 +325,10 @@ class ServerRequestManager extends Thread with Loggable {
             val responseId = jobId.split('-').last
             logger.info (s"\nEXECUTE Callback: responseId=${responseId}, jobId=${jobId}, response=${response_xml.toString}\n")
             if( response_xml.toString.toLowerCase.substring(0,20).contains("exception") ) {
-              throw new Exception( response_xml.toString )
+              val exception_text_nodes:Seq[Node] = (response_xml \\ "ExceptionText").theSeq
+              val error_text = if( exception_text_nodes.isEmpty ) { response_xml.toString } else { exception_text_nodes.head.text }
+              logger.info ( s"EDASW::Throwing Exception, Text: ${error_text}" )
+              throw new Exception( error_text )
             } else {
               jobCompleted(responseId, response_xml, true )
             }
