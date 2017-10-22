@@ -345,7 +345,7 @@ class ServerRequestManager extends Thread with Loggable {
         new Exception( error_text, ex )
       } catch { case ex1: Exception => ex }
       val response_xml = new WPSExceptionReport( exception ).toXml( response_syntax )
-      val msg = s"\nJob exited with error, jobId=$jobId, response=${response_xml.toString}\n"
+      val msg = s"\nJob exited with error --> jobId=$jobId, response=${response_xml.toString}\n"
       logger.info (msg)
       print(msg)
       jobCompleted( jobId, response_xml, false )
