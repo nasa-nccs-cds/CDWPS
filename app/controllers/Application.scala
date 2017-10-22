@@ -343,7 +343,7 @@ class ServerRequestManager extends Thread with Loggable {
         val exception_text_nodes: Seq[Node] = (error_node \\ "ExceptionText").theSeq
         val error_text = if (exception_text_nodes.isEmpty) { error_node.toString  } else {  exception_text_nodes.head.text  }
         new Exception( error_text, ex )
-      } catch { case ex: Exception => ex }
+      } catch { case ex1: Exception => ex }
       val response_xml = new WPSExceptionReport( exception ).toXml( response_syntax )
       val msg = s"\nJob exited with error, jobId=$jobId, response=${response_xml.toString}\n"
       logger.info (msg)
