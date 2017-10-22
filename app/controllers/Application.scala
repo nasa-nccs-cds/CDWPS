@@ -31,10 +31,24 @@ object StatusValue extends Enumeration { val QUEUED, EXECUTING, COMPLETED, ERROR
 case class WPSJobStatus( job: Job ) {
   private var _report: String = ""
   private var _status: StatusValue.Value = StatusValue.QUEUED
-  def setStatus( status: StatusValue.Value ): Unit = { _status = status }
-  def getStatus: StatusValue.Value = { _status }
-  def setReport( report: String ): Unit = { _report = report }
-  def getReport: String = { _report }
+
+  def setStatus(status: StatusValue.Value): Unit = {
+    _status = status
+  }
+
+  def getStatus: StatusValue.Value = {
+    _status
+  }
+
+  def setReport(report: String): Unit = {
+    _report = report
+  }
+
+  def getReport: String = {
+    _report
+  }
+
+
 }
 
 class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Loggable {
@@ -333,14 +347,8 @@ class ServerRequestManager extends Thread with Loggable {
         response
     }
   } catch {
-    case ex: Throwable =>
-      val exception = try {
-        logger.info ( s" Processing exception text '${ex.getMessage}'" )
-        val error_node = scala.xml.XML.loadString( ex.getMessage )
-        val exception_text_nodes: Seq[Node] = (error_node \\ "ExceptionText").theSeq
-        val error_text = if (exception_text_nodes.isEmpty) { error_node.toString  } else {  exception_text_nodes.head.text  }
-        new Exception( error_text, ex )
-      } catch { case ex1: Exception => ex }
+    case ex: Exception =>
+      val exception = WPS_XML.extractErrorMessage(ex)
       val response_xml = new WPSExceptionReport( exception ).toXml( response_syntax )
       val msg = s"\nJob exited with error --> jobId=$jobId, response=${response_xml.toString}\n"
       logger.info (msg)
