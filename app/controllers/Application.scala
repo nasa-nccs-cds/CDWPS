@@ -325,10 +325,7 @@ class ServerRequestManager extends Thread with Loggable {
             val responseId = jobId.split('-').last
             logger.info (s"\nEXECUTE Callback: responseId=${responseId}, jobId=${jobId}, response=${response_xml.toString}\n")
             if( response_xml.toString.toLowerCase.substring(0,20).contains("exception") ) {
-              val exception_text_nodes:Seq[Node] = (response_xml \\ "ExceptionText").theSeq
-              val error_text = if( exception_text_nodes.isEmpty ) { response_xml.toString } else { exception_text_nodes.head.text }
-              logger.info ( s"EDASW::Throwing Exception, Text: ${error_text}" )
-              throw new Exception( error_text )
+              throw new Exception( response_xml.toString )
             } else {
               jobCompleted(responseId, response_xml, true )
             }
@@ -340,8 +337,15 @@ class ServerRequestManager extends Thread with Loggable {
     }
   } catch {
     case ex: Throwable =>
-      val response_xml = new WPSExceptionReport( ex ).toXml( response_syntax )
-      val msg = s"\nJob exited with error, jobId=${jobId}, response=${response_xml.toString}\n"
+      val exception = try {
+        logger.info ( s" Processing exception text '${ex.getMessage}'" )
+        val error_node = scala.xml.XML.loadString( ex.getMessage )
+        val exception_text_nodes: Seq[Node] = (error_node \\ "ExceptionText").theSeq
+        val error_text = if (exception_text_nodes.isEmpty) { error_node.toString  } else {  exception_text_nodes.head.text  }
+        new Exception( error_text, ex )
+      } catch { case ex: Exception => ex }
+      val response_xml = new WPSExceptionReport( exception ).toXml( response_syntax )
+      val msg = s"\nJob exited with error, jobId=$jobId, response=${response_xml.toString}\n"
       logger.info (msg)
       print(msg)
       jobCompleted( jobId, response_xml, false )
