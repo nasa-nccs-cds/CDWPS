@@ -305,7 +305,7 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
   override def run() {
-    logger.info( "EDASW: Starting webProcessManager with server_address = " + server_address + ", EDAS libs logging to: " + EDASLogManager.getCurrentLogger().logFilePath.toString )
+    logger.info( "EDASW: Starting webProcessManager with server_address = " + server_address + ", EDAS libs logging to: " + EDASLogManager.getCurrentLogger.logFilePath.toString )
     processManager = Some( if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) } )
     try {
       while ( active ) {
