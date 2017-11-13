@@ -12,7 +12,7 @@ object Library {
   val netcdf4        = "edu.ucar"           % "netcdf4"         % "4.6.6"
   val mockitoAll     = "org.mockito"       %  "mockito-all"     % Version.mockito
   val scalaTest      = "org.scalatest"     %% "scalatest"       % Version.scalaTest
-  val edas           = "nasa.nccs"         %% "edas"       % "1.2.2-SNAPSHOT"
+  val edas           = "nasa.nccs"         %% "edas"       % "1.0-SNAPSHOT"
   val scalactic      = "org.scalactic" %% "scalactic" % "3.0.0"
   val scalatest      = "org.scalatest" %% "scalatest" % "3.0.0" % "test"
   val sparkCore      = "org.apache.spark"  %% "spark-core"      % Version.spark
