@@ -267,7 +267,7 @@ class ServerRequestManager extends Thread with Loggable {
         jobStatus.setStatus( status )
         jobStatus.setReport( report )
         jobStatus.job
-      case None => throw new Exception( "Attempt to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ") )
+      case None => throw new Exception( "Attempt[1] to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ") )
     }
   }
 
@@ -297,7 +297,7 @@ class ServerRequestManager extends Thread with Loggable {
           case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", jobStatus.getReport, requestId )
         }
       case None =>
-        val msg = "Attempt to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ")
+        val msg = "Attempt[2] to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ")
         logger.error( msg )
         new WPSExecuteStatusError( "WPS", "NonExistentJob: " + msg, requestId )
     }
