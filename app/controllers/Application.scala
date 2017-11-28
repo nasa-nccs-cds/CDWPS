@@ -123,21 +123,21 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
     }
   }
 
-  def getResultFile(id: String, service: String) = Action {
-    try {
-      serverRequestManager.getResultFilePath(service, id) match {
-        case Some(resultFilePath: String) =>
-          logger.info(s"WPS getResult: resultFilePath=$resultFilePath")
-          Ok.sendFile(new File(resultFilePath)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-        case None =>
-          NotFound("Result not yet available").withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-      }
-    } catch {
-      case e: Exception =>
-        InternalServerError(e.getMessage)
-          .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-    }
-  }
+//  def getResultFile(id: String, service: String) = Action {
+//    try {
+//      serverRequestManager.getResultFilePath(service, id) match {
+//        case Some(resultFilePath: String) =>
+//          logger.info(s"WPS getResult: resultFilePath=$resultFilePath")
+//          Ok.sendFile(new File(resultFilePath)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+//        case None =>
+//          NotFound("Result not yet available").withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+//      }
+//    } catch {
+//      case e: Exception =>
+//        InternalServerError(e.getMessage)
+//          .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+//    }
+//  }
 
   def getResult(id: String, service: String) = Action {
     try {
@@ -170,10 +170,11 @@ class ServerRequestManager extends Thread with Loggable {
     processManager.map( _.term() )
   }
 
-  def getResultFilePath( service: String, resultId: String ): Option[String] = processManager match {
-    case Some( procMgr ) => procMgr.getResultFilePath( service, resultId )
-    case None => throw new Exception( "Attempt to access undefined ProcessManager")
-  }
+//  def getResultFilePath( service: String, resultId: String ): Option[String] = processManager match {
+//    case Some( procMgr ) => procMgr.getResultFilePath( service, resultId )
+//    case None => throw new Exception( "Attempt to access undefined ProcessManager")
+//  }
+
   def getResult( service: String, resultId: String, response_syntax: ResponseSyntax.Value ): xml.Node= processManager match {
     case Some( procMgr ) => procMgr.getResult( service, resultId, response_syntax )
     case None => throw new Exception( "Attempt to access undefined ProcessManager")
