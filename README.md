@@ -49,7 +49,7 @@ _WPS implementation built on scala/play, designed to interface to big data frame
 ####  Code development:
 
     1) Install IntelliJ IDEA CE from https://www.jetbrains.com/idea/download/ with Scala plugin enabled.
-    
+        
     2) Start IDEA and import the CDWPS Project from Version Control (github) using the address https://github.com/nasa-nccs-cds/CDWPS.git.
         
 

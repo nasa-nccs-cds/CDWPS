@@ -6,9 +6,11 @@ name := """CDWPS"""
 
 organization := "nccs"
 
-version := "1.1-SNAPSHOT"
+val EDAS_VERSION = sys.env.get("EDAS_VERSION").getOrElse("{UNDEFINED}")
 
-scalaVersion := "2.10.5"
+version := EDAS_VERSION + "-SNAPSHOT"
+scalaVersion := "2.11.8"
+organization := "nasa.nccs"
 
 Play2WarPlugin.play2WarSettings
 
