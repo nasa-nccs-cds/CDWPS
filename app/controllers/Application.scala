@@ -22,18 +22,41 @@ import play.api.mvc._
 import nasa.nccs.esgf.wps.{GenericProcessManager, Job, _}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import nasa.nccs.utilities.{EDASLogManager, Loggable}
+import nasa.nccs.utilities.{EDASLogManager, Loggable, cdsutils}
 import nasa.nccs.wps._
 import org.apache.commons.lang.RandomStringUtils
 
+import scala.collection.mutable
+
 
 object StatusValue extends Enumeration { val QUEUED, EXECUTING, COMPLETED, ERROR, UNDEFINED = Value }
-case class WPSJobStatus( job: Job ) {
+case class WPSJobStatus( job: Job, queue: String ) {
   private var _report: String = ""
   private var _status: StatusValue.Value = StatusValue.QUEUED
+  private var _queue: String = queue
+  private var _startNTime = System.nanoTime()
+  def timeInStatus: Int = ((System.nanoTime()-_startNTime)/1.0e9).toInt
+  def timeInJob: Int = job.elapsed
+  private def resetTimer(): Unit = { _startNTime = System.nanoTime() }
+  def isExecuting: Boolean = (getStatus == StatusValue.EXECUTING)
 
-  def setStatus(status: StatusValue.Value): Unit = {
+  private var _params = mutable.HashMap.empty[String,String]
+
+  def updateStatus( status: StatusValue.Value, report: String, queue: String, elapsed: Int ) : Unit =  {
     _status = status
+    _report = report
+    _queue = queue
+    if(_status != status) { resetTimer() }
+  }
+
+  def config( key: String, value: String ): Unit = _params += (( key, value ))
+  def +=( param: (String,String) ): Unit = _params += param
+  def params: Iterator[(String,String)] = _params.iterator
+  def param( key: String ): Option[String] = _params.get( key )
+
+  def setStatus(status: StatusValue.Value): Unit = if(_status != status) {
+    _status = status
+    resetTimer()
   }
 
   def getStatus: StatusValue.Value = {
@@ -48,7 +71,9 @@ case class WPSJobStatus( job: Job ) {
     _report
   }
 
-
+  def getQueue: String = {
+    _queue
+  }
 }
 
 class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Loggable {
@@ -64,14 +89,14 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
       logger.info("\n ------------------------- EDASW: Application SHUTDOWN ----------------------------------- \n")
       serverRequestManager.term()
       logger.close()
-      Future.successful()
+      Future.successful[Unit](Unit)
     } catch { case err: Exception => Future.failed(err) }
   }
 
   def execute(request: String, identifier: String, datainputs: String) = Action {
     try {
       val storeExecuteResponse: String = "true";
-      val status: String = "false";
+      val status: String = "true";
       request.toLowerCase match {
         case "getcapabilities" =>
           logger.info(s"getcapabilities: identifier = ${identifier}")
@@ -80,10 +105,9 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
           Ok( serverRequestManager.describeProcess( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "execute" =>
           val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "response" -> "file" )
-          val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val jobId: String = runargs.getOrElse( "jobId", RandomStringUtils.random(8, true, true) )
           logger.info( s"Received WPS Request: Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
-          val job = Job( jobId, identifier, datainputs, runargs )
+          val job = Job( jobId, identifier, datainputs, runargs, 1.0f )
           serverRequestManager.addJob(job)
           val response = createResponse( jobId )
           //         BadRequest(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -150,20 +174,46 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
 
 }
 
+object JobQueues {
+  def create(config: Map[String, String] ): Seq[JobQueue] = {
+    val thresholds = config.getOrElse( "job.queue.thresholds", "FastLane:250m,SlowLane:5g" )
+    thresholds.split( "," ).map( qSpec => JobQueues.factory(qSpec) ).sortBy( _.threshold )
+  }
+
+  def factory( queueSpec: String ): JobQueue = {
+    val queueSpecItems = queueSpec.split( ":" )
+    assert( queueSpecItems.length == 2, s"Format error in Job Queue Spec, should be something like 'SlowLane:5g', actual value = $queueSpecItems" )
+    JobQueue( queueSpecItems(0), cdsutils.parseMemsize(queueSpecItems(1)) )
+  }
+}
+
+case class JobQueue( name: String, threshold: Long ) {
+  private val _queue = new PriorityBlockingQueue[String]()
+  private var _currentJob: Option[String] = None
+  def +=( jobId: String ): Unit = _queue.add( jobId )
+  def size = _queue.size
+  def popJob( waitTimeSecs: Int ): Option[String] = { _currentJob = Option( _queue.poll(waitTimeSecs,TimeUnit.SECONDS) ); _currentJob }
+  def currentJob: Option[String] = _currentJob
+}
+
 class ServerRequestManager extends Thread with Loggable {
-  val jobQueue = new PriorityBlockingQueue[String]()
+  val config: Map[String, String] = serverConfiguration
+  val jobQueues: Seq[JobQueue] = JobQueues.create(config)
   val jobDirectory = TrieMap.empty[String,WPSJobStatus]
   private var _active = true;
   val capabilitiesCache = TrieMap.empty[String,xml.Node]
   val processesCache = TrieMap.empty[String,xml.Node]
   val responseCache = TrieMap.empty[String,xml.Node]
   var active: Boolean = true;
-  val config: Map[String, String] = serverConfiguration
+
   appParameters.setCustomCacheDir( config.getOrElse( "edas.cache.dir", "" ) )
   appParameters.addConfigParams(config)
   val server_address = config.getOrElse( "edas.server.address", "" )
   val response_syntax: ResponseSyntax.Value = ResponseSyntax.fromString( config.getOrElse( "edas.response.syntax", "wps" ) )
   protected var processManager: Option[GenericProcessManager] = None
+
+  def findQueue( jobSize: Long ): Option[JobQueue] = jobQueues.find( jobSize < _.threshold )
+  def maxJobSize: Long = jobQueues.last.threshold
 
   def term() = {
     active = false;
@@ -184,12 +234,23 @@ class ServerRequestManager extends Thread with Loggable {
     case None => throw new Exception( "Attempt to access undefined ProcessManager")
   }
 
-  def deactivate = { active = false; }
+  def deactivate(): Unit = { active = false; }
 
   def addJob( job: Job ): Unit = {
-    jobDirectory += ( job.requestId -> WPSJobStatus(job) )
-    jobQueue.put( job.requestId )
-    logger.info( s"EDASW:Added job ${job.requestId} to job queue, nJobs = ${jobQueue.size()}"  )
+    val jobSize = getJobSize(job)
+    findQueue( jobSize ) match {
+      case Some(queue) =>
+        jobDirectory += ( job.requestId -> WPSJobStatus( job, queue.name ) )
+        queue += job.requestId
+        logger.info( s"EDASW:Added job ${job.requestId} to job queue, nJobs = ${queue.size}"  )
+      case None =>
+        throw new Exception( s"Job request is too large: $jobSize, max job size = $maxJobSize" )
+    }
+  }
+
+  def getJobSize( job: Job ): Long = {
+    val parsed_data_inputs: Map[String, Seq[Map[String, Any]]] = wpsObjectParser.parseDataInputs(job.datainputs)
+    val domains: Seq[Map[String, Any]] = parsed_data_inputs.getOrElse( "domain", Seq.empty[Map[String, Any]] )
   }
 
   def initialize(): Unit = {
@@ -251,15 +312,18 @@ class ServerRequestManager extends Thread with Loggable {
     newMessage
   }
 
-  def executeJob( job: Job, timeout_sec: Int = 180 ): xml.Node = {
-    jobDirectory += ( job.requestId -> WPSJobStatus(job) )
-    logger.info( "EDASW::executeJob: " + job.requestId  )
-    jobQueue.put( job.requestId )
-    getResponse( job.requestId, 180 )
+  def executeQuery( job: Job, timeout_sec: Int = 180 ): xml.Node = {
+    val jobQueue = jobQueues.head
+    jobDirectory += ( job.requestId -> WPSJobStatus(job,jobQueue.name) )
+    logger.info( "EDASW::executeQuery: " + job.requestId  )
+    jobQueue += job.requestId
+    getResponse( job.requestId, timeout_sec )
   }
 
-  def jobsExecuting: Boolean = jobDirectory.values.exists( _.getStatus == StatusValue.EXECUTING )
-  def waitUntilAllJobsComplete = { while ( active && jobsExecuting ) { Thread.sleep( 100 ) } }
+  def jobExecuting( jobId: String ): Boolean = jobDirectory.get(jobId).exists( _.isExecuting )
+  def jobsExecuting: Boolean = jobDirectory.values.exists( _.isExecuting )
+  def waitUntilAllJobsComplete: Unit = { while ( active && jobsExecuting ) { Thread.sleep( 100 ) } }
+  def waitUntilJobCompletes(jobId: String): Unit = { while ( active && jobExecuting(jobId) ) { Thread.sleep( 100 ) } }
 
   def updateJobStatus( requestId: String, status: StatusValue.Value, report: String  ): Job = {
     logger.info( "EDASW::updateJobStatus: " + requestId + ", status = " + status.toString )
@@ -277,14 +341,14 @@ class ServerRequestManager extends Thread with Loggable {
     capabilitiesCache.get( identifier ) match {
       case Some( cap ) => cap
       case None =>
-        val cap = executeJob( new Job( "getcapabilities:" + identifier, identifier ) )
+        val cap = executeQuery( new Job( "getcapabilities:" + identifier, identifier, 1.0f ) )
         if( !cap.label.toLowerCase.contains("error") ) { capabilitiesCache.put( identifier, cap ) }
         cap
     }
   }
 
   def describeProcess( identifier: String ): xml.Node = {
-    processesCache.getOrElseUpdate( identifier, executeJob( new Job( "describeprocess:" + identifier, identifier ) ) )
+    processesCache.getOrElseUpdate( identifier, executeQuery( new Job( "describeprocess:" + identifier, identifier, 1.0f ) ) )
   }
 
 
@@ -292,10 +356,10 @@ class ServerRequestManager extends Thread with Loggable {
     val status: WPSResponse = jobDirectory.get( requestId ) match {
       case Some( jobStatus ) =>
         jobStatus.getStatus match {
-          case StatusValue.EXECUTING => new WPSExecuteStatusStarted( "WPS", jobStatus.getReport, requestId )
+          case StatusValue.EXECUTING => new WPSExecuteStatusStarted( "WPS", jobStatus.getReport, requestId, jobStatus.timeInStatus )
           case StatusValue.COMPLETED => new WPSExecuteStatusCompleted( "WPS", jobStatus.getReport, requestId )
           case StatusValue.ERROR =>     new WPSExecuteStatusError( "WPS", jobStatus.getReport, requestId )
-          case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", jobStatus.getReport, requestId )
+          case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", jobStatus.getReport, requestId, jobStatus.getQueue, jobStatus.timeInStatus )
         }
       case None =>
         val msg = "Attempt[2] to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ")
@@ -310,14 +374,15 @@ class ServerRequestManager extends Thread with Loggable {
     processManager = Some( if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) } )
     try {
       while ( active ) {
-        logger.info( "EDASW::Polling job queue: " + jobQueue.toString )
-        Option( jobQueue.poll( 1, TimeUnit.MINUTES ) ) match {
-          case Some( jobId ) =>
-            logger.info( "EDASW::Popped job for exec: " + jobId )
-            val result = submitJob( processManager.get, jobId )
-          //            waitUntilAllJobsComplete
-          case None => logger.info( s"EDASW:: Looking for jobs in queue, nJobs = ${jobQueue.size()}" )
-        }
+        jobQueues.foreach( jobQueue => if( ! jobQueue.currentJob.fold(false)(jobExecuting) ) {
+          logger.info("EDASW::Polling job queue: " + jobQueue.toString)
+          jobQueue.popJob( 1 ) match {
+            case Some(jobId) =>
+              logger.info("EDASW::Popped job for exec: " + jobId)
+              val result = submitJob(processManager.get, jobId)
+            case None => logger.info(s"EDASW:: Looking for jobs in queue, nJobs = ${jobQueue.size}")
+          }
+        })
       }
     } catch {
       case exc: InterruptedException => return
