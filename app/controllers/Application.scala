@@ -64,7 +64,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
       logger.info("\n ------------------------- EDASW: Application SHUTDOWN ----------------------------------- \n")
       serverRequestManager.term()
       logger.close()
-      Future.successful()
+      Future.successful[Unit](Unit)
     } catch { case err: Exception => Future.failed(err) }
   }
 
@@ -83,7 +83,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
           val parsed_data_inputs = wpsObjectParser.parseDataInputs(datainputs)
           val jobId: String = runargs.getOrElse( "jobId", RandomStringUtils.random(8, true, true) )
           logger.info( s"Received WPS Request: Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
-          val job = Job( jobId, identifier, datainputs, runargs )
+          val job = Job( jobId, identifier, datainputs, runargs, 1f )
           serverRequestManager.addJob(job)
           val response = createResponse( jobId )
           //         BadRequest(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -272,19 +272,10 @@ class ServerRequestManager extends Thread with Loggable {
     }
   }
 
-  def getCapabilities( identifier: String ): xml.Node = {
-    logger.info( "EDASW::getCapabilities, cache = " + capabilitiesCache.mkString("; ") )
-    capabilitiesCache.get( identifier ) match {
-      case Some( cap ) => cap
-      case None =>
-        val cap = executeJob( new Job( "getcapabilities:" + identifier, identifier ) )
-        if( !cap.label.toLowerCase.contains("error") ) { capabilitiesCache.put( identifier, cap ) }
-        cap
-    }
-  }
+  def getCapabilities( identifier: String ): xml.Node = executeJob( new Job( "getcapabilities:" + identifier, identifier, 1f ) )
 
   def describeProcess( identifier: String ): xml.Node = {
-    processesCache.getOrElseUpdate( identifier, executeJob( new Job( "describeprocess:" + identifier, identifier ) ) )
+    processesCache.getOrElseUpdate( identifier, executeJob( new Job( "describeprocess:" + identifier, identifier, 1f ) ) )
   }
 
 
@@ -292,10 +283,10 @@ class ServerRequestManager extends Thread with Loggable {
     val status: WPSResponse = jobDirectory.get( requestId ) match {
       case Some( jobStatus ) =>
         jobStatus.getStatus match {
-          case StatusValue.EXECUTING => new WPSExecuteStatusStarted( "WPS", jobStatus.getReport, requestId )
+          case StatusValue.EXECUTING => new WPSExecuteStatusStarted( "WPS", jobStatus.getReport, requestId, jobStatus.job.elapsed )
           case StatusValue.COMPLETED => new WPSExecuteStatusCompleted( "WPS", jobStatus.getReport, requestId )
           case StatusValue.ERROR =>     new WPSExecuteStatusError( "WPS", jobStatus.getReport, requestId )
-          case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", jobStatus.getReport, requestId )
+          case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", jobStatus.getReport, requestId, "DEFAULT", jobStatus.job.elapsed )
         }
       case None =>
         val msg = "Attempt[2] to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ")
