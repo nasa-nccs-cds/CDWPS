@@ -20,6 +20,10 @@ object Library {
   val scalactic      = "org.scalactic"      %% "scalactic"      % "3.0.0"
   val scalatest      = "org.scalatest"      %% "scalatest"      % "3.0.0" % "test"
   val sparkCore      = "org.apache.spark"  %% "spark-core"      % Version.spark
+
+  val jacksonCore = "com.fasterxml.jackson.core" % "jackson-core" % Version.jackson
+  val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % Version.jackson
+  val jacksonModule = "com.fasterxml.jackson.module" % "jackson-module-scala_2.10" % Version.jackson
 }
 
 object Dependencies {
