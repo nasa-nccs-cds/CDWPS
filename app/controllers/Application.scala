@@ -15,6 +15,8 @@ import javax.inject._
 
 import play.api.inject.ApplicationLifecycle
 import nasa.nccs.edas.utilities.appParameters
+import nasa.nccs.esgf.process.TaskRequest
+import nasa.nccs.esgf.process.{DataContainer, DomainContainer, OperationContext, UID}
 
 import scala.collection.concurrent.TrieMap
 import play.api.Play
@@ -25,8 +27,57 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import nasa.nccs.utilities.{EDASLogManager, Loggable, cdsutils}
 import nasa.nccs.wps._
 import org.apache.commons.lang.RandomStringUtils
+import org.joda.time.DateTime
 
 import scala.collection.mutable
+
+class WPSJob(requestId: String, identifier: String, datainputs: String, private val _runargs: Map[String,String], collectionsNode: xml.Node, _priority: Float) extends Job(requestId, identifier, datainputs, _runargs, _priority) {
+  val parsed_data_inputs: Map[String, Seq[Map[String, Any]]] = wpsObjectParser.parseDataInputs(datainputs)
+  val uid = UID( requestId )
+  val op_spec_list: Seq[Map[String, Any]] = parsed_data_inputs.getOrElse("operation", List())
+  val data_list: List[DataContainer] = parsed_data_inputs.getOrElse("variable", List()).flatMap(DataContainer.factory(uid, _, op_spec_list.isEmpty )).toList
+  val domain_list: List[DomainContainer] = parsed_data_inputs.getOrElse("domain", List()).map(DomainContainer(_)).toList
+  val opSpecs: Seq[Map[String, Any]] = if(op_spec_list.isEmpty) { TaskRequest.getEmptyOpSpecs(data_list) } else { op_spec_list }
+  val operation_map: Map[String,OperationContext] = Map( opSpecs.zipWithIndex.map {  case (op, index) => OperationContext(index, uid, identifier, data_list.map(_.uid), op) } map ( op => op.identifier -> op ) :_* )
+  val operation_list: Seq[OperationContext] = operation_map.values.toSeq
+  val variableMap: Map[String, DataContainer] = TaskRequest.buildVarMap(data_list, operation_list)
+  val domainMap: Map[String, DomainContainer] = TaskRequest.buildDomainMap(domain_list)
+  TaskRequest.inferDomains(operation_list, variableMap )
+  val sources = data_list.flatMap( input => input.getSourceOpt )
+  val inputs: Seq[(String,String,String)] = sources.map( source => ( source.collection.id, source.name, source.declared_domain.getOrElse( throw new Exception( s"No domain declared for data source ${source.name}" ) ) ) )
+  val inputSizes = inputs.map { case ( colId, varId, domId ) => {
+    val domain: DomainContainer = domainMap.getOrElse( domId, throw new Exception(s" %JS Can't find domain $domId in job, known domains = [ ${domainMap.keys.mkString(", ")} ] "))
+    val collectionNode: xml.Node = findCollectionNode( colId, collectionsNode ).getOrElse(throw new Exception(s" %JS Can't find collection $colId in Job"))
+    val variableNode: xml.Node = findVariableNode( varId, collectionNode ).getOrElse(throw new Exception(s" %JS Can't find variable $varId in Collection $colId"))
+    val dims = getNodeAttribute( variableNode,"dims").getOrElse(throw new Exception(s" %JS Can't find dims attr in variable '$varId' node in Collection $colId"))
+    val shape = getNodeAttribute( variableNode,"shape").getOrElse(throw new Exception(s" %JS Can't find shape attr in variable '$varId' node in Collection $colId"))
+    val resolutions = new CollectionResolution(getNodeAttribute(collectionNode, "resolution").getOrElse(throw new Exception(s" %JS Can't find resolution for collection ${colId}")))
+    val sizes: Seq[Int] = for( axis <- domain.axes; resolution = resolutions.getResolution(axis.getCFAxisName).getOrElse(throw new Exception(s" %JS Can't find resolution for axis ${axis.getCFAxisName} in collection ${domId}")  ) ) yield {
+      axis.system match {
+        case "indices" => axis.end.toInt - axis.start.toInt
+        case "values" => ( (axis.end.toDouble - axis.start.toDouble ) / resolution ).toInt
+        case "timestamps" =>
+          val t0 = new DateTime(axis.start.toString).toDate.getTime / 1.0e9
+          val t1 = new DateTime(axis.end.toString).toDate.getTime / 1.0e9
+          ( ( t1 - t0 ) / resolution ).toInt
+      }
+    }
+    sizes.product
+  }}
+
+  def findCollectionNode( colId: String, collectionsNode: xml.Node ): Option[xml.Node] = {
+    collectionsNode.find(getNodeAttribute(_,"id").fold(false)(_.equalsIgnoreCase(colId)))
+  }
+
+  def findVariableNode( varId: String, collectionNode: xml.Node ): Option[xml.Node] = {
+    collectionNode.find(getNodeAttribute(_,"id").fold(false)(_.equalsIgnoreCase(varId)))
+  }
+
+
+  def getNodeAttribute( node: xml.Node, attrId: String ): Option[String] = {
+    node.attribute( attrId ).flatMap( _.find( _.nonEmpty ).map( _.text ) )
+  }
+}
 
 
 object StatusValue extends Enumeration { val QUEUED, EXECUTING, COMPLETED, ERROR, UNDEFINED = Value }
@@ -107,7 +158,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
           val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "response" -> "file" )
           val jobId: String = runargs.getOrElse( "jobId", RandomStringUtils.random(8, true, true) )
           logger.info( s"Received WPS Request: Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
-          val job = Job( jobId, identifier, datainputs, runargs, 1.0f )
+          val job = new WPSJob( jobId, identifier, datainputs, runargs, serverRequestManager.getCapabilities("col"), 1.0f )
           serverRequestManager.addJob(job)
           val response = createResponse( jobId )
           //         BadRequest(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -196,12 +247,17 @@ case class JobQueue( name: String, threshold: Long ) {
   def currentJob: Option[String] = _currentJob
 }
 
+case class CollectionResolution( spec: String ) {
+  private val _resolution: Map[String,Float] = Map( spec.split(';').toSeq.map( _.split(':').toSeq ).map( dim => dim(0).toLowerCase -> dim(1).toFloat): _* )
+  def getResolution( dim: String ): Option[Float] = _resolution.get( dim.toLowerCase )
+
+}
+
 class ServerRequestManager extends Thread with Loggable {
   val config: Map[String, String] = serverConfiguration
   val jobQueues: Seq[JobQueue] = JobQueues.create(config)
   val jobDirectory = TrieMap.empty[String,WPSJobStatus]
   private var _active = true;
-  val capabilitiesCache = TrieMap.empty[String,xml.Node]
   val processesCache = TrieMap.empty[String,xml.Node]
   val responseCache = TrieMap.empty[String,xml.Node]
   var active: Boolean = true;
@@ -236,7 +292,7 @@ class ServerRequestManager extends Thread with Loggable {
 
   def deactivate(): Unit = { active = false; }
 
-  def addJob( job: Job ): Unit = {
+  def addJob( job: WPSJob ): Unit = {
     val jobSize = getJobSize(job)
     findQueue( jobSize ) match {
       case Some(queue) =>
@@ -248,10 +304,7 @@ class ServerRequestManager extends Thread with Loggable {
     }
   }
 
-  def getJobSize( job: Job ): Long = {
-    val parsed_data_inputs: Map[String, Seq[Map[String, Any]]] = wpsObjectParser.parseDataInputs(job.datainputs)
-    val domains: Seq[Map[String, Any]] = parsed_data_inputs.getOrElse( "domain", Seq.empty[Map[String, Any]] )
-  }
+  def getJobSize( job: WPSJob ): Long = job.inputSizes.sum
 
   def initialize(): Unit = {
     setDaemon(true)
@@ -336,16 +389,7 @@ class ServerRequestManager extends Thread with Loggable {
     }
   }
 
-  def getCapabilities( identifier: String ): xml.Node = {
-    logger.info( "EDASW::getCapabilities, cache = " + capabilitiesCache.mkString("; ") )
-    capabilitiesCache.get( identifier ) match {
-      case Some( cap ) => cap
-      case None =>
-        val cap = executeQuery( new Job( "getcapabilities:" + identifier, identifier, 1.0f ) )
-        if( !cap.label.toLowerCase.contains("error") ) { capabilitiesCache.put( identifier, cap ) }
-        cap
-    }
-  }
+  def getCapabilities( identifier: String ): xml.Node = executeQuery( new Job( "getcapabilities:" + identifier, identifier, 1.0f ) )
 
   def describeProcess( identifier: String ): xml.Node = {
     processesCache.getOrElseUpdate( identifier, executeQuery( new Job( "describeprocess:" + identifier, identifier, 1.0f ) ) )
