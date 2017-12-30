@@ -90,7 +90,7 @@ case class WPSJobStatus( job: Job, queue: String ) {
   def timeInJob: Int = job.elapsed
   private def resetTimer(): Unit = { _startNTime = System.nanoTime() }
   def isExecuting: Boolean = (getStatus == StatusValue.EXECUTING)
-
+  def toXml: xml.Node = <job id={job.identifier} rId={job.requestId} queue={_queue} status={_status.toString} age={timeInJob.toString} timeInStatus={timeInStatus.toString}> {_report} </job>
   private var _params = mutable.HashMap.empty[String,String]
 
   def updateStatus( status: StatusValue.Value, report: String, queue: String, elapsed: Int ) : Unit =  {
@@ -151,7 +151,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
       request.toLowerCase match {
         case "getcapabilities" =>
           logger.info(s"getcapabilities: identifier = ${identifier}")
-          Ok( serverRequestManager.getCapabilities( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+          Ok(serverRequestManager.getCapabilities(identifier)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "describeprocess" =>
           Ok( serverRequestManager.describeProcess( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "execute" =>
@@ -390,10 +390,16 @@ class ServerRequestManager extends Thread with Loggable {
   }
 
 
-  def getCapabilities( identifier: String ): xml.Node = executeQuery( new Job( "getcapabilities:" + identifier, identifier, 1.0f ) )
+  def getCapabilities( identifier: String ): xml.Node =
+    if( identifier.toLowerCase.startsWith("job") ) { getJobReport }
+    else {  executeQuery( new Job( "getcapabilities:" + identifier, identifier, 1.0f ) ) }
 
   def describeProcess( identifier: String ): xml.Node = {
     processesCache.getOrElseUpdate( identifier, executeQuery( new Job( "describeprocess:" + identifier, identifier, 1.0f ) ) )
+  }
+
+  def getJobReport: xml.Node = {
+    <jobs>  { jobDirectory.values.map( _.toXml ) } </jobs>
   }
 
 
