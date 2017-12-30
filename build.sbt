@@ -49,9 +49,15 @@ resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
 resolvers += "Local EDAS Repository" at "file:///" + getPublishDir( ).toString
 resolvers += "Geotoolkit" at "http://maven.geotoolkit.org/"
 
+<<<<<<< HEAD
 val fasterxml = "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.5"
 
 dependencyOverrides ++= Set( fasterxml )
+=======
+dependencyOverrides += Library.jacksonCore
+dependencyOverrides += Library.jacksonDatabind
+dependencyOverrides += Library.jacksonModule
+>>>>>>> master
 
 libraryDependencies += filters
 libraryDependencies ++= Dependencies.scala

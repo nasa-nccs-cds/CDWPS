@@ -389,6 +389,7 @@ class ServerRequestManager extends Thread with Loggable {
     }
   }
 
+
   def getCapabilities( identifier: String ): xml.Node = executeQuery( new Job( "getcapabilities:" + identifier, identifier, 1.0f ) )
 
   def describeProcess( identifier: String ): xml.Node = {
