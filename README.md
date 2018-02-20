@@ -5,8 +5,7 @@ _WPS implementation built on scala/play, designed to interface to big data frame
 ####  Prerequisite: Install the Scala develpment tools:
 
     1) Scala:                     http://www.scala-lang.org/download/install.html                   
-                        
-    
+                           
     2) Scala Build Tool (sbt):    http://www.scala-sbt.org/0.13/docs/Setup.html
                         
 
@@ -35,15 +34,18 @@ _WPS implementation built on scala/play, designed to interface to big data frame
 
         >> git clone https://github.com/nasa-nccs-cds/CDWPS.git
 
-    3) Build and run the application:
+    3) Build the application and create a war file:
 
         >> cd CDWPS
-        >> sbt run
+        >> sbt war
+        
+    4) Run the application standalone:
+    
+        >> sbt war
 
-     4) EDAS Clients:
+     5) EDAS Python Client:
 
-        a) EDAS Wizard Shell: https://github.com/nasa-nccs-cds/EDASClientConsole
-        b) Python API:        https://github.com/ESGF/esgf-compute-api.git
+       https://github.com/ESGF/esgf-compute-api.git
 
 
 ####  Code development:
