@@ -38,7 +38,7 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
   val data_list: List[DataContainer] = parsed_data_inputs.getOrElse("variable", List()).flatMap(DataContainer.factory(uid, _, op_spec_list.isEmpty )).toList
   val domain_list: List[DomainContainer] = parsed_data_inputs.getOrElse("domain", List()).map(DomainContainer(_)).toList
   val opSpecs: Seq[Map[String, Any]] = if(op_spec_list.isEmpty) { TaskRequest.getEmptyOpSpecs(data_list) } else { op_spec_list }
-  val operation_map: Map[String,OperationContext] = Map( opSpecs.zipWithIndex.map {  case (op, index) => OperationContext(index, uid, identifier, data_list.map(_.uid), op) } map ( op => op.identifier -> op ) :_* )
+  val operation_map: Map[String,OperationContext] = Map( opSpecs.zipWithIndex.map {  case (op, index) => OperationContext( uid, identifier, data_list.map(_.uid), op) } map ( op => op.identifier -> op ) :_* )
   val operation_list: Seq[OperationContext] = operation_map.values.toSeq
   val variableMap: Map[String, DataContainer] = TaskRequest.buildVarMap(data_list, operation_list)
   val domainMap: Map[String, DomainContainer] = TaskRequest.buildDomainMap(domain_list)
@@ -155,15 +155,19 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
         case "describeprocess" =>
           Ok( serverRequestManager.describeProcess( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "execute" =>
-          val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "response" -> "file" )
-          val jobId: String = runargs.getOrElse( "jobId", RandomStringUtils.random(8, true, true) )
-          logger.info( s"Received WPS Request: Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
-          val job = new WPSJob( jobId, identifier, datainputs, runargs, serverRequestManager.getCapabilities("col"), 1.0f )
-          serverRequestManager.addJob(job)
-          val response = createResponse( jobId )
-          //         BadRequest(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-          Ok(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-
+          if( identifier.equalsIgnoreCase( "util.reset" ) ) {
+            serverRequestManager.resetJobQueues
+            Ok( createResponse("RESET") ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+          } else {
+            val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "response" -> "file")
+            val jobId: String = runargs.getOrElse("jobId", RandomStringUtils.random(8, true, true))
+            logger.info(s"Received WPS Request: Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
+            val job = new WPSJob(jobId, identifier, datainputs, runargs, serverRequestManager.getCapabilities("col"), 1.0f)
+            serverRequestManager.addJob(job)
+            val response = createResponse(jobId)
+            //         BadRequest(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+            Ok(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+          }
       }
     } catch {
       case e: BadRequestException =>
@@ -245,6 +249,7 @@ case class JobQueue( name: String, threshold: Long ) {
   def size = _queue.size
   def popJob( waitTimeSecs: Int ): Option[String] = { _currentJob = Option( _queue.poll(waitTimeSecs,TimeUnit.SECONDS) ); _currentJob }
   def currentJob: Option[String] = _currentJob
+  def clear: Unit = { _currentJob = None; _queue.clear() }
 }
 
 case class CollectionResolution( spec: String ) {
@@ -302,6 +307,11 @@ class ServerRequestManager extends Thread with Loggable {
       case None =>
         throw new Exception( s"Job request is too large: $jobSize, max job size = $maxJobSize" )
     }
+  }
+
+  def resetJobQueues( ): Unit = {
+    jobDirectory.clear()
+    jobQueues.foreach( _.clear )
   }
 
   def getJobSize( job: WPSJob ): Long = job.inputSizes.sum
@@ -413,8 +423,7 @@ class ServerRequestManager extends Thread with Loggable {
           case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", jobStatus.getReport, requestId, jobStatus.getQueue, jobStatus.timeInStatus )
         }
       case None =>
-        val msg = "Attempt[2] to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ")
-        logger.error( msg )
+        val msg = s"Job ${requestId} has been killed by system administration"
         new WPSExecuteStatusError( "WPS", "NonExistentJob: " + msg, requestId )
     }
     status.toXml( response_syntax )
