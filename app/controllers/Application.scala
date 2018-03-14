@@ -147,7 +147,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
   def executeUtilityRequest( request: String ): Node = {
     if( request.equalsIgnoreCase( "reset" ) ) {
       serverRequestManager.resetJobQueues
-      createResponse("RESET")
+      createResponse("util.reset")
     } else {
       throw new Exception( "Unknown utility request: " + request )
     }
