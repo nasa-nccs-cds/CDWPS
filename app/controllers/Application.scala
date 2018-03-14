@@ -144,6 +144,15 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
     } catch { case err: Exception => Future.failed(err) }
   }
 
+  def executeUtilityRequest( request: String ): Node = {
+    if( request.equalsIgnoreCase( "reset" ) ) {
+      serverRequestManager.resetJobQueues
+      createResponse("RESET")
+    } else {
+      throw new Exception( "Unknown utility request: " + request )
+    }
+  }
+
   def execute(request: String, identifier: String, datainputs: String) = Action {
     try {
       val storeExecuteResponse: String = "true";
@@ -155,9 +164,9 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
         case "describeprocess" =>
           Ok( serverRequestManager.describeProcess( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "execute" =>
-          if( identifier.equalsIgnoreCase( "util.reset" ) ) {
-            serverRequestManager.resetJobQueues
-            Ok( createResponse("RESET") ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+          val idToks = identifier.split('.')
+          if( idToks(0).equalsIgnoreCase( "util" ) ) {
+            Ok( executeUtilityRequest( idToks.last ) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
           } else {
             val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "response" -> "file")
             val jobId: String = runargs.getOrElse("jobId", RandomStringUtils.random(8, true, true))
