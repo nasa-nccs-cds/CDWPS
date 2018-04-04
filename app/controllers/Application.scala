@@ -38,7 +38,7 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
   val data_list: List[DataContainer] = parsed_data_inputs.getOrElse("variable", List()).flatMap(DataContainer.factory(uid, _, op_spec_list.isEmpty )).toList
   val domain_list: List[DomainContainer] = parsed_data_inputs.getOrElse("domain", List()).map(DomainContainer(_)).toList
   val opSpecs: Seq[Map[String, Any]] = if(op_spec_list.isEmpty) { TaskRequest.getEmptyOpSpecs(data_list) } else { op_spec_list }
-  val operation_map: Map[String,OperationContext] = Map( opSpecs.zipWithIndex.map {  case (op, index) => OperationContext(index, uid, identifier, data_list.map(_.uid), op) } map ( op => op.identifier -> op ) :_* )
+  val operation_map: Map[String,OperationContext] = Map( opSpecs.map ( opSpec => OperationContext( uid, identifier, data_list.map(_.uid), opSpec ) ) map ( op => op.identifier -> op ) :_* )
   val operation_list: Seq[OperationContext] = operation_map.values.toSeq
   val variableMap: Map[String, DataContainer] = TaskRequest.buildVarMap(data_list, operation_list)
   val domainMap: Map[String, DomainContainer] = TaskRequest.buildDomainMap(domain_list)
@@ -410,7 +410,13 @@ class ServerRequestManager extends Thread with Loggable {
           case StatusValue.EXECUTING => new WPSExecuteStatusStarted( "WPS", jobStatus.getReport, requestId, jobStatus.timeInStatus )
           case StatusValue.COMPLETED => new WPSExecuteStatusCompleted( "WPS", jobStatus.getReport, requestId )
           case StatusValue.ERROR =>     new WPSExecuteStatusError( "WPS", jobStatus.getReport, requestId )
-          case StatusValue.QUEUED =>    new WPSExecuteStatusQueued( "WPS", jobStatus.getReport, requestId, jobStatus.getQueue, jobStatus.timeInStatus )
+          case StatusValue.QUEUED =>
+            if( processManager.fold( true )( _.serverIsDown ) ) {
+              jobDirectory.remove( requestId )
+              new WPSExecuteStatusError( "WPS", "EDAS Analytics Server is Currently Down", requestId )
+            } else {
+              new WPSExecuteStatusQueued("WPS", jobStatus.getReport, requestId, jobStatus.getQueue, jobStatus.timeInStatus)
+            }
         }
       case None =>
         val msg = "Attempt[2] to set status on non-existent job: " + requestId + ", jobs = " + jobDirectory.keys.mkString(", ")
