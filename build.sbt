@@ -45,9 +45,14 @@ def getPublishDir(): File = {
 }
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
-resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
+
 resolvers += "Local EDAS Repository" at "file:///" + getPublishDir( ).toString
 resolvers += "Geotoolkit" at "http://maven.geotoolkit.org/"
+resolvers += "Boundless Maven Repository" at "http://repo.boundlessgeo.com/main"
+resolvers += "Maven Central" at "http://central.maven.org/maven2/"
+resolvers += "spray repo" at "http://repo.spray.io"
+
+// resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
 
 dependencyOverrides += Library.jacksonCore
 dependencyOverrides += Library.jacksonDatabind
