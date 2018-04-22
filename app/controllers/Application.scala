@@ -334,23 +334,6 @@ class ServerRequestManager extends Thread with Loggable {
     //    getCapabilities("col")
   }
 
-  def getResponseR( responseId: String, timeout_sec: Int, current_time_msec: Long = 0L ): xml.Node = {
-    val sleeptime_ms = 100L
-    val response = if( current_time_msec >= timeout_sec * 1000 ) {
-      <error type="InternalServerError" rid={responseId}>  Timed out waiting for response </error>
-    } else {
-      responseCache.get(responseId) match {
-        case Some(response) => return response
-        case None =>
-          Thread.sleep(sleeptime_ms)
-          getResponseR(responseId, timeout_sec, current_time_msec + sleeptime_ms)
-      }
-    }
-    val message = response.toString
-    logger.info( s"EDASW::getResponse($responseId), Sample: ${message.substring(0,Math.min(0,message.length))}" )
-    response
-  }
-
   def getResponse( responseId: String, timeout_sec: Int ): xml.Node = {
     val sleeptime_ms = 100L
     val timeout_ms =  timeout_sec * 1000
@@ -361,7 +344,7 @@ class ServerRequestManager extends Thread with Loggable {
         case Some(response) =>
           val raw_message = response.toString
           val message = insertParameterRefs( raw_message )
-          logger.info( s"EDASW::getResponse($responseId), Sample: ${message.substring(0,Math.min(0,message.length))}" )
+          logger.info( s"EDASW::getResponse($responseId): ${raw_message.substring(0,Math.min(500,message.length))}" )
           return  XML.loadString(message)
         case None =>
           Thread.sleep(sleeptime_ms)
@@ -485,8 +468,9 @@ class ServerRequestManager extends Thread with Loggable {
           }
           override def failure ( msg: String ): Unit = { throw new Exception( msg ) }
         }
+        logger.info (s"EDASW::Executing Process, job identifier=${job.identifier}")
         val response: xml.Node = processMgr.executeProcess( job, Some (executionCallback) )
-        logger.info ("Completed request '%s' in %.4f sec".format (job.identifier, (System.nanoTime () - t0) / 1.0E9) )
+        logger.info ("EDASW::Completed request '%s' in %.4f sec".format (job.identifier, (System.nanoTime () - t0) / 1.0E9) )
         response
     }
   } catch {
