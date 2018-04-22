@@ -20,6 +20,9 @@ object Library {
   val scalactic      = "org.scalactic"      %% "scalactic"      % "3.0.0"
   val scalatest      = "org.scalatest"      %% "scalatest"      % "3.0.0" % "test"
   val sparkCore      = "org.apache.spark"  %% "spark-core"      % Version.spark
+  val play           = "com.typesafe.play"  %% "play"           % "2.6.4"
+  val playServer     = "com.typesafe.play"  %% "play-server"    % "2.6.4"
+  val playWS         = "com.typesafe.play"  %% "play-ws"        % "2.6.4"
 
   val jacksonCore = "com.fasterxml.jackson.core" % "jackson-core" % Version.jackson
   val jacksonDatabind = "com.fasterxml.jackson.core" % "jackson-databind" % Version.jackson
@@ -32,6 +35,8 @@ object Dependencies {
   val scala = Seq( scalactic, scalatest )
 
   val EDAS = Seq( edas, sparkCore )
+
+  val playFramework = Seq( play )
 
   val netcdf = Seq( cdm, clcommon, netcdf4 )
 

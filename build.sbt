@@ -62,7 +62,7 @@ libraryDependencies += filters
 libraryDependencies ++= Dependencies.scala
 libraryDependencies ++= Dependencies.EDAS
 
-ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
+ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true)   }
 
 routesGenerator := InjectedRoutesGenerator
 
