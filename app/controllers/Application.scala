@@ -47,7 +47,7 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
   val inputs: Seq[(String,String,String)] = sources.map( source => ( source.collection.id, source.name, source.declared_domain.getOrElse( throw new Exception( s"No domain declared for data source ${source.name}" ) ) ) )
   val inputSizes = inputs.map { case ( colId, varId, domId ) => {
     val domain: DomainContainer = domainMap.getOrElse( domId, throw new Exception(s" %JS Can't find domain $domId in job, known domains = [ ${domainMap.keys.mkString(", ")} ] "))
-    val collectionNode: xml.Node = findCollectionNode( colId, collectionsNode ).getOrElse(throw new Exception(s" %JS Can't find collection $colId in Job, cols = [${getCollectionIds(collectionsNode).mkString(",")}], parent = \n${collectionsNode.toString}"))
+    val collectionNode: xml.Node = findCollectionNode( colId, collectionsNode ).getOrElse(throw new Exception(s" %JS Can't find collection $colId in Job, cols(${getNumCollections(collectionsNode)}) = [${getCollectionIds(collectionsNode).mkString(",")}], parent = \n${collectionsNode.toString.substring(0,500)}"))
     val variableNode: xml.Node = findVariableNode( varId, collectionNode ).getOrElse(throw new Exception(s" %JS Can't find variable $varId in Collection $colId"))
     val dims = getNodeAttribute( variableNode,"dims").getOrElse(throw new Exception(s" %JS Can't find dims attr in variable '$varId' node in Collection $colId"))
     val shape = getNodeAttribute( variableNode,"shape").getOrElse(throw new Exception(s" %JS Can't find shape attr in variable '$varId' node in Collection $colId"))
@@ -66,10 +66,12 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
   }}
 
   def findCollectionNode( colId: String, collectionsNode: xml.Node ): Option[xml.Node] = {
-    collectionsNode.find(getNodeAttribute(_,"id").fold(false)(_.equalsIgnoreCase(colId)))
+    collectionsNode.child.find(node => getNodeAttribute(node,"id").fold(false)(_.equalsIgnoreCase(colId)))
   }
 
-  def getCollectionIds(collectionsNode: xml.Node ): Seq[String] = collectionsNode.iterator.toSeq.flatMap( getNodeAttribute(_,"id") )
+  def getCollectionIds(collectionsNode: xml.Node ): Seq[String] = collectionsNode.child.flatMap( node => getNodeAttribute(node,"id") )
+
+  def getNumCollections(collectionsNode: xml.Node ): Int = collectionsNode.child.length
 
   def findVariableNode( varId: String, collectionNode: xml.Node ): Option[xml.Node] = {
     collectionNode.find(getNodeAttribute(_,"id").fold(false)(_.equalsIgnoreCase(varId)))
