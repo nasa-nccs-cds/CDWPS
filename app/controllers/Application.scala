@@ -57,8 +57,8 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
         case "indices" => axis.end.toInt - axis.start.toInt
         case "values" => ( (axis.end.toDouble - axis.start.toDouble ) / resolution ).toInt
         case "timestamps" =>
-          val t0 = new DateTime(axis.start.toString).toDate.getTime / 1.0e9
-          val t1 = new DateTime(axis.end.toString).toDate.getTime / 1.0e9
+          val t0 = new DateTime(axis.start.toString).getMillis
+          val t1 = new DateTime(axis.end.toString).getMillis
           ( ( t1 - t0 ) / resolution ).toInt
       }
     }
