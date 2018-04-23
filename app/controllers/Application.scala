@@ -51,7 +51,7 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
     val variableNode: xml.Node = findVariableNode( varId, collectionNode ).getOrElse(throw new Exception(s" %JS Can't find variable $varId in Collection $colId, childIds = [${getChildIds(collectionsNode).mkString(",")}]"))
     val dims = getNodeAttribute( variableNode,"dims").getOrElse(throw new Exception(s" %JS Can't find dims attr in variable '$varId' node in Collection $colId"))
     val shape = getNodeAttribute( variableNode,"shape").getOrElse(throw new Exception(s" %JS Can't find shape attr in variable '$varId' node in Collection $colId" ))
-    val resolutions = new CollectionResolution(getNodeAttribute(collectionNode, "resolution").getOrElse(throw new Exception(s" %JS Can't find resolution for collection ${colId}")))
+    val resolutions = new CollectionResolution(getNodeAttribute(variableNode, "resolution").getOrElse(throw new Exception(s" %JS Can't find resolution for collection ${colId}")))
     val sizes: Seq[Int] = for( axis <- domain.axes; resolution = resolutions.getResolution(axis.getCFAxisName).getOrElse(throw new Exception(s" %JS Can't find resolution for axis ${axis.getCFAxisName} in collection ${domId}")  ) ) yield {
       axis.system match {
         case "indices" => axis.end.toInt - axis.start.toInt
@@ -80,7 +80,6 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
     }
     None
   }
-
 
   def getNodeAttribute( node: xml.Node, attrId: String ): Option[String] = {
     node.attribute( attrId ).flatMap( _.find( _.nonEmpty ).map( _.text ) )
