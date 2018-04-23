@@ -75,7 +75,7 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
 
   def findVariableNode( varId: String, collectionNode: xml.Node ): Option[xml.Node] = {
     for( agg_node <- collectionNode.nonEmptyChildren ) {
-      val optVarNode = agg_node.find(getNodeAttribute(_,"id").fold(false)(_.equalsIgnoreCase(varId)))
+      val optVarNode = agg_node.child.find(getNodeAttribute(_,"name").fold(false)(_.equalsIgnoreCase(varId)))
       if( optVarNode.isDefined) { return optVarNode }
     }
     None
