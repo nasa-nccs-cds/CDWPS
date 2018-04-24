@@ -442,12 +442,13 @@ class ServerRequestManager extends Thread with Loggable {
     try {
       while ( active ) {
         jobQueues.foreach( jobQueue => if( ! jobQueue.currentJob.fold(false)(jobExecuting) ) {
-          logger.info("EDASW::Polling job queue: " + jobQueue.toString)
+//          logger.info("EDASW::Polling job queue: " + jobQueue.toString)
           jobQueue.popJob( 1 ) match {
             case Some(jobId) =>
               logger.info("EDASW::Popped job for exec: " + jobId)
               val result = submitJob(processManager.get, jobId)
-            case None => logger.info(s"EDASW:: Looking for jobs in queue, nJobs = ${jobQueue.size}")
+            case None =>
+              // logger.info(s"EDASW:: Looking for jobs in queue, nJobs = ${jobQueue.size}")
           }
         })
       }
