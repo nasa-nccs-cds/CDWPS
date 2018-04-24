@@ -269,7 +269,7 @@ case class JobQueue( name: String, threshold: Long ) {
 }
 
 case class CollectionResolution( spec: String ) {
-  private val _resolution: Map[String,Float] = Map( spec.split(';').toSeq.map( _.split(':').toSeq ).map( dim => dim(0).toLowerCase -> dim(1).toFloat): _* )
+  private val _resolution: Map[String,Float] = Map( spec.split(',').toSeq.map( _.split(':').toSeq ).map( dim => dim(0).toLowerCase -> dim(1).toFloat): _* )
   def getResolution( dim: String ): Option[Float] = _resolution.get( dim.toLowerCase )
 
 }
