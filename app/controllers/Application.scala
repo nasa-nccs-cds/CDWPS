@@ -139,6 +139,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
   val printer = new scala.xml.PrettyPrinter(200, 3)
   logger.info( "\n ------------------------- EDASW: Application STARTUP ----------------------------------- \n" )
   val serverRequestManager = new ServerRequestManager()
+  lazy val collections: xml.Node = serverRequestManager.getCapabilities("col")
   serverRequestManager.initialize()
   lifecycle.addStopHook( { () => term() } )
 
@@ -167,7 +168,8 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
       request.toLowerCase match {
         case "getcapabilities" =>
           logger.info(s"getcapabilities: identifier = ${identifier}")
-          Ok(serverRequestManager.getCapabilities(identifier)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+          if( identifier.startsWith("col") ) { Ok( collections ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*") }
+          else { Ok(serverRequestManager.getCapabilities(identifier)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*") }
         case "describeprocess" =>
           Ok( serverRequestManager.describeProcess( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "execute" =>
@@ -178,7 +180,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
             val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "response" -> "file")
             val jobId: String = runargs.getOrElse("jobId", RandomStringUtils.random(8, true, true))
             logger.info(s"Received WPS Request: Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
-            val job = new WPSJob(jobId, identifier, datainputs, runargs, serverRequestManager.getCapabilities("col"), 1.0f)
+            val job = new WPSJob(jobId, identifier, datainputs, runargs, collections, 1.0f)
             serverRequestManager.addJob(job)
             val response = createResponse(jobId)
             //         BadRequest(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
