@@ -469,9 +469,9 @@ class ServerRequestManager extends Thread with Loggable {
         logger.info (s"\n\nEDASW::Popped job identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
         val parsed_data_inputs = wpsObjectParser.parseDataInputs (job.datainputs)
         logger.info (s"EDASW::Executing Process, job identifier=${job.identifier}")
-        val response: xml.Node = processMgr.executeProcess( job )
+        val response: xml.Node = processMgr.executeProcess( "cds2", job )
         val responseId = jobId.split('-').last
-        waitUntilJobCompletes( responseId )
+        processMgr.waitUntilJobCompletes( "cds2", responseId )
         jobCompleted(responseId, response, true )
         logger.info ("EDASW::Completed request '%s' in %.4f sec".format (job.identifier, (System.nanoTime () - t0) / 1.0E9) )
         response

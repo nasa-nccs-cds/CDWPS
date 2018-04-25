@@ -29,7 +29,7 @@ def getCacheDir(): File = {
     case Some(cache_dir) => file(cache_dir)
     case None =>
       val home = file(System.getProperty("user.home"))
-      home / ".edas" / "cache"
+      home / ".edas" /  "cache"
   }
   cdir.mkdirs()
   cdir
