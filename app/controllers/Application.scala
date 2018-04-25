@@ -471,7 +471,7 @@ class ServerRequestManager extends Thread with Loggable {
         logger.info (s"EDASW::Executing Process, job identifier=${job.identifier}, job requestId=${job.requestId}, jobId=${jobId}")
         val (responseId, responseElem ) = processMgr.executeProcess( "cds2", job )
         processMgr.waitUntilJobCompletes( "cds2", responseId )
-        jobCompleted(responseId, responseElem, true )
+        jobCompleted(job.identifier, responseElem, true )
         logger.info ("EDASW::Completed request '%s' in %.4f sec".format (job.identifier, (System.nanoTime () - t0) / 1.0E9) )
         responseElem
     }
