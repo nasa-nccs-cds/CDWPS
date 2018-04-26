@@ -65,8 +65,8 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
         case "indices" => axis.end.toInt - axis.start.toInt
         case "values" => ( (axis.end.toDouble - axis.start.toDouble ) / resolution ).toInt
         case "timestamps" =>
-          val t0 = new DateTime(axis.start.toString).toDate.getTime / 1.0e9
-          val t1 = new DateTime(axis.end.toString).toDate.getTime / 1.0e9
+          val t0 = new DateTime(axis.start.toString).getMillis
+          val t1 = new DateTime(axis.end.toString).getMillis
           ( ( t1 - t0 ) / resolution ).toInt
       }
     }
@@ -148,6 +148,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
   val printer = new scala.xml.PrettyPrinter(200, 3)
   logger.info( "\n ------------------------- EDASW: Application STARTUP ----------------------------------- \n" )
   val serverRequestManager = new ServerRequestManager()
+  lazy val collections: xml.Node = serverRequestManager.getCapabilities("col")
   serverRequestManager.initialize()
   lifecycle.addStopHook( { () => term() } )
 
@@ -176,7 +177,8 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
       request.toLowerCase match {
         case "getcapabilities" =>
           logger.info(s"getcapabilities: identifier = ${identifier}")
-          Ok(serverRequestManager.getCapabilities(identifier)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+          if( identifier.startsWith("col") ) { Ok( collections ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*") }
+          else { Ok(serverRequestManager.getCapabilities(identifier)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*") }
         case "describeprocess" =>
           Ok( serverRequestManager.describeProcess( identifier) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
         case "execute" =>
@@ -187,7 +189,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
             val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "response" -> "file")
             val jobId: String = runargs.getOrElse("jobId", RandomStringUtils.random(8, true, true))
             logger.info(s"Received WPS Request: Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
-            val job = new WPSJob(jobId, identifier, datainputs, runargs, serverRequestManager.getCapabilities("col"), 1.0f)
+            val job = new WPSJob(jobId, identifier, datainputs, runargs, collections, 1.0f)
             serverRequestManager.addJob(job)
             val response = createResponse(jobId)
             //         BadRequest(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -278,7 +280,7 @@ case class JobQueue( name: String, threshold: Long ) {
 }
 
 case class CollectionResolution( spec: String ) {
-  private val _resolution: Map[String,Float] = Map( spec.split(';').toSeq.map( _.split(':').toSeq ).map( dim => dim(0).toLowerCase -> dim(1).toFloat): _* )
+  private val _resolution: Map[String,Float] = Map( spec.split(',').toSeq.map( _.split(':').toSeq ).map( dim => dim(0).toLowerCase -> dim(1).toFloat): _* )
   def getResolution( dim: String ): Option[Float] = _resolution.get( dim.toLowerCase )
 
 }
@@ -449,12 +451,13 @@ class ServerRequestManager extends Thread with Loggable {
     try {
       while ( active ) {
         jobQueues.foreach( jobQueue => if( ! jobQueue.currentJob.fold(false)(jobExecuting) ) {
-          logger.info("EDASW::Polling job queue: " + jobQueue.toString)
+//          logger.info("EDASW::Polling job queue: " + jobQueue.toString)
           jobQueue.popJob( 1 ) match {
             case Some(jobId) =>
               logger.info("EDASW::Popped job for exec: " + jobId)
               val result = submitJob(processManager.get, jobId)
-            case None => logger.info(s"EDASW:: Looking for jobs in queue, nJobs = ${jobQueue.size}")
+            case None =>
+              // logger.info(s"EDASW:: Looking for jobs in queue, nJobs = ${jobQueue.size}")
           }
         })
       }
@@ -474,18 +477,12 @@ class ServerRequestManager extends Thread with Loggable {
       case _ =>
         logger.info (s"\n\nEDASW::Popped job identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
         val parsed_data_inputs = wpsObjectParser.parseDataInputs (job.datainputs)
-        val executionCallback: ExecutionCallback = new ExecutionCallback {
-          override def success ( response_xml: xml.Node ): Unit = {
-            val responseId = jobId.split('-').last
-            logger.info (s"\nEXECUTE Callback: responseId=${responseId}, jobId=${jobId}, response=${response_xml.toString}\n")
-            jobCompleted(responseId, response_xml, true )
-          }
-          override def failure ( msg: String ): Unit = { throw new Exception( msg ) }
-        }
-        logger.info (s"EDASW::Executing Process, job identifier=${job.identifier}")
-        val response: xml.Node = processMgr.executeProcess( job, Some (executionCallback) )
+        logger.info (s"EDASW::Executing Process, job identifier=${job.identifier}, job requestId=${job.requestId}, jobId=${jobId}")
+        val (responseId, responseElem ) = processMgr.executeProcess( "cds2", job )
+        processMgr.waitUntilJobCompletes( "cds2", responseId )
+        jobCompleted(jobId, responseElem, true )
         logger.info ("EDASW::Completed request '%s' in %.4f sec".format (job.identifier, (System.nanoTime () - t0) / 1.0E9) )
-        response
+        responseElem
     }
   } catch {
     case ex: Exception =>
