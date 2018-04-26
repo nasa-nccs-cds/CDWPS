@@ -31,6 +31,14 @@ import org.joda.time.DateTime
 
 import scala.collection.mutable
 
+object Util {
+  def sample( obj: Any, maxLen: Int = 500  ): String = {
+    val str = obj.toString
+    str.substring( 0, math.min( maxLen, str.length ) )
+  }
+
+}
+
 class WPSJob(requestId: String, identifier: String, datainputs: String, private val _runargs: Map[String,String], collectionsNode: xml.Node, _priority: Float) extends Job(requestId, identifier, datainputs, _runargs, _priority) {
   val parsed_data_inputs: Map[String, Seq[Map[String, Any]]] = wpsObjectParser.parseDataInputs(datainputs)
   val uid = UID( requestId )
@@ -47,7 +55,7 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
   val inputs: Seq[(String,String,String)] = sources.map( source => ( source.collection.id, source.name, source.declared_domain.getOrElse( throw new Exception( s"No domain declared for data source ${source.name}" ) ) ) )
   val inputSizes = inputs.map { case ( colId, varId, domId ) => {
     val domain: DomainContainer = domainMap.getOrElse( domId, throw new Exception(s" %JS Can't find domain $domId in job, known domains = [ ${domainMap.keys.mkString(", ")} ] "))
-    val collectionNode: xml.Node = findCollectionNode( colId, collectionsNode ).getOrElse(throw new Exception(s" %JS Can't find collection $colId in Job, cols(${getNumCollections(collectionsNode)}) = [${getChildIds(collectionsNode).mkString(",")}], parent = \n${collectionsNode.toString.substring(0,500)}"))
+    val collectionNode: xml.Node = findCollectionNode( colId, collectionsNode ).getOrElse(throw new Exception(s" %JS Can't find collection $colId in Job, cols(${getNumCollections(collectionsNode)}) = [${getChildIds(collectionsNode).mkString(",")}], parent = \n${Util.sample(collectionsNode)}"))
     val variableNode: xml.Node = findVariableNode( varId, collectionNode ).getOrElse(throw new Exception(s" %JS Can't find variable $varId in Collection $colId, childIds = [${getChildIds(collectionsNode).mkString(",")}]"))
     val dims = getNodeAttribute( variableNode,"dims").getOrElse(throw new Exception(s" %JS Can't find dims attr in variable '$varId' node in Collection $colId"))
     val shape = getNodeAttribute( variableNode,"shape").getOrElse(throw new Exception(s" %JS Can't find shape attr in variable '$varId' node in Collection $colId" ))
@@ -64,6 +72,7 @@ class WPSJob(requestId: String, identifier: String, datainputs: String, private 
     }
     sizes.product
   }}
+
 
   def findCollectionNode( colId: String, collectionsNode: xml.Node ): Option[xml.Node] = {
     collectionsNode.child.find(node => getNodeAttribute(node,"id").fold(false)(_.equalsIgnoreCase(colId)))
@@ -349,7 +358,7 @@ class ServerRequestManager extends Thread with Loggable {
         case Some(response) =>
           val raw_message = response.toString
           val message = insertParameterRefs( raw_message )
-          logger.info( s"EDASW::getResponse($responseId): ${raw_message.substring(0,Math.min(500,message.length))}" )
+          logger.info( s"EDASW::getResponse($responseId): ${Util.sample(raw_message)}" )
           return  XML.loadString(message)
         case None =>
           Thread.sleep(sleeptime_ms)
