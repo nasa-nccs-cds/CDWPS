@@ -170,10 +170,8 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
     }
   }
 
-  def execute(request: String, identifier: String, datainputs: String) = Action {
+  def execute(request: String, identifier: String, datainputs: String, responseForm: String, status: String, storeExecuteResponse: String) = Action {
     try {
-      val storeExecuteResponse: String = "true";
-      val status: String = "true";
       request.toLowerCase match {
         case "getcapabilities" =>
           logger.info(s"getcapabilities: identifier = ${identifier}")
@@ -186,14 +184,14 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
           if( idToks(0).equalsIgnoreCase( "util" ) ) {
             Ok( executeUtilityRequest( idToks.last ) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
           } else {
-            val runargs = Map("responseform" -> "wps", "storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "response" -> "file")
+            val runargs = Map("storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "responseform" -> responseForm )
             val jobId: String = runargs.getOrElse("jobId", RandomStringUtils.random(8, true, true))
             logger.info(s"Received WPS Request: Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
             val job = new WPSJob(jobId, identifier, datainputs, runargs, collections, 1.0f)
             serverRequestManager.addJob(job)
-            val response = createResponse(jobId)
+            val result = createResponse(jobId)
             //         BadRequest(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-            Ok(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+            Ok(result).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
           }
       }
     } catch {

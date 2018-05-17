@@ -4,7 +4,7 @@
 
 GET     /assets/*file            controllers.Assets.versioned(path="/public", file: Asset)
 GET     /cwt/status              controllers.WPS.getResultStatus( id: String )
-GET     /cwt                     controllers.WPS.execute( request: String, identifier: String ?= "", datainputs: String ?= "" )
+GET     /cwt                     controllers.WPS.execute( request: String, identifier: String ?= "", datainputs: String ?= "", responseForm: String ?= "file", status: String ?= "true", storeExecuteResponse: String ?= "false" )
 GET     /count                   demo.HelloController.count
 
 
