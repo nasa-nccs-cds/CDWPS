@@ -39,61 +39,64 @@ object Util {
 
 }
 
-class WPSJob(requestId: String, identifier: String, datainputs: String, private val _runargs: Map[String,String], collectionsNode: xml.Node, _priority: Float) extends Job(requestId, identifier, datainputs, _runargs, _priority) {
-  val parsed_data_inputs: Map[String, Seq[Map[String, Any]]] = wpsObjectParser.parseDataInputs(datainputs)
-  val uid = UID( requestId )
-  val op_spec_list: Seq[Map[String, Any]] = parsed_data_inputs.getOrElse("operation", List())
-  val data_list: List[DataContainer] = parsed_data_inputs.getOrElse("variable", List()).flatMap(DataContainer.factory(uid, _, op_spec_list.isEmpty )).toList
-  val domain_list: List[DomainContainer] = parsed_data_inputs.getOrElse("domain", List()).map(DomainContainer(_)).toList
-  val opSpecs: Seq[Map[String, Any]] = if(op_spec_list.isEmpty) { TaskRequest.getEmptyOpSpecs(data_list) } else { op_spec_list }
-  val operation_map: Map[String,OperationContext] = Map( opSpecs.map ( opSpec => OperationContext( uid, identifier, data_list.map(_.uid), opSpec ) ) map ( op => op.identifier -> op ) :_* )
-  val operation_list: Seq[OperationContext] = operation_map.values.toSeq
-  val variableMap: Map[String, DataContainer] = TaskRequest.buildVarMap(data_list, operation_list)
-  val domainMap: Map[String, DomainContainer] = TaskRequest.buildDomainMap(domain_list)
-  TaskRequest.inferDomains(operation_list, variableMap )
-  val sources = data_list.flatMap( input => input.getSourceOpt )
-  val inputs: Seq[(String,String,String)] = sources.map( source => ( source.collection.id, source.name, source.declared_domain.getOrElse( throw new Exception( s"No domain declared for data source ${source.name}" ) ) ) )
-  val inputSizes = inputs.map { case ( colId, varId, domId ) => {
-    val domain: DomainContainer = domainMap.getOrElse( domId, throw new Exception(s" %JS Can't find domain $domId in job, known domains = [ ${domainMap.keys.mkString(", ")} ] "))
-    val collectionNode: xml.Node = findCollectionNode( colId, collectionsNode ).getOrElse(throw new Exception(s" %JS Can't find collection $colId in Job, cols(${getNumCollections(collectionsNode)}) = [${getChildIds(collectionsNode).mkString(",")}], parent = \n${Util.sample(collectionsNode)}"))
-    val variableNode: xml.Node = findVariableNode( varId, collectionNode ).getOrElse(throw new Exception(s" %JS Can't find variable $varId in Collection $colId, childIds = [${getChildIds(collectionsNode).mkString(",")}]"))
-    val dims = getNodeAttribute( variableNode,"dims").getOrElse(throw new Exception(s" %JS Can't find dims attr in variable '$varId' node in Collection $colId"))
-    val shape = getNodeAttribute( variableNode,"shape").getOrElse(throw new Exception(s" %JS Can't find shape attr in variable '$varId' node in Collection $colId" ))
-    val resolutions = new CollectionResolution(getNodeAttribute(variableNode, "resolution").getOrElse(throw new Exception(s" %JS Can't find resolution for collection ${colId}")))
-    val sizes: Seq[Int] = for( axis <- domain.axes; resolution = resolutions.getResolution(axis.getCFAxisName).getOrElse(throw new Exception(s" %JS Can't find resolution for axis ${axis.getCFAxisName} in collection ${domId}")  ) ) yield {
-      axis.system match {
-        case "indices" => axis.end.toInt - axis.start.toInt
-        case "values" => ( (axis.end.toDouble - axis.start.toDouble ) / resolution ).toInt
-        case "timestamps" =>
-          val t0 = new DateTime(axis.start.toString).getMillis
-          val t1 = new DateTime(axis.end.toString).getMillis
-          ( ( t1 - t0 ) / resolution ).toInt
-      }
-    }
-    sizes.product
-  }}
-
-
-  def findCollectionNode( colId: String, collectionsNode: xml.Node ): Option[xml.Node] = {
-    collectionsNode.child.find(node => getNodeAttribute(node,"id").fold(false)(_.equalsIgnoreCase(colId)))
-  }
-
-  def getChildIds(parentNode: xml.Node ): Seq[String] = parentNode.child.flatMap( node => getNodeAttribute(node,"id") )
-
-  def getNumCollections(collectionsNode: xml.Node ): Int = collectionsNode.child.length
-
-  def findVariableNode( varId: String, collectionNode: xml.Node ): Option[xml.Node] = {
-    for( agg_node <- collectionNode.nonEmptyChildren ) {
-      val optVarNode = agg_node.child.find(getNodeAttribute(_,"name").fold(false)(_.equalsIgnoreCase(varId)))
-      if( optVarNode.isDefined) { return optVarNode }
-    }
-    None
-  }
-
-  def getNodeAttribute( node: xml.Node, attrId: String ): Option[String] = {
-    node.attribute( attrId ).flatMap( _.find( _.nonEmpty ).map( _.text ) )
-  }
-}
+//class WPSJob(requestId: String, identifier: String, datainputs: String, private val _runargs: Map[String,String], collectionsNode: xml.Node, _priority: Float) extends Job(requestId, identifier, datainputs, _runargs, _priority) {
+//  val parsed_data_inputs: Map[String, Seq[Map[String, Any]]] = wpsObjectParser.parseDataInputs(datainputs)
+//  val uid = UID( requestId )
+//  val op_spec_list: Seq[Map[String, Any]] = parsed_data_inputs.getOrElse("operation", List())
+//  val data_list: List[DataContainer] = parsed_data_inputs.getOrElse("variable", List()).flatMap(DataContainer.factory(uid, _, op_spec_list.isEmpty )).toList
+//  val domain_list: List[DomainContainer] = parsed_data_inputs.getOrElse("domain", List()).map(DomainContainer(_)).toList
+//  val opSpecs: Seq[Map[String, Any]] = if(op_spec_list.isEmpty) { TaskRequest.getEmptyOpSpecs(data_list) } else { op_spec_list }
+//  val operation_map: Map[String,OperationContext] = Map( opSpecs.map ( opSpec => OperationContext( uid, identifier, data_list.map(_.uid), opSpec ) ) map ( op => op.identifier -> op ) :_* )
+//  val operation_list: Seq[OperationContext] = operation_map.values.toSeq
+//  val variableMap: Map[String, DataContainer] = TaskRequest.buildVarMap(data_list, operation_list)
+//  val domainMap: Map[String, DomainContainer] = TaskRequest.buildDomainMap(domain_list)
+//  TaskRequest.inferDomains(operation_list, variableMap )
+//  val sources = data_list.flatMap( input => input.getSourceOpt )
+//  val inputs: Seq[(String,String,String)] = sources.map( source => ( source.collection.id, source.name, source.declared_domain.getOrElse( throw new Exception( s"No domain declared for data source ${source.name}" ) ) ) )
+//  val inputSizes = inputs.map { case ( colId, varId, domId ) => {
+//    val domain: DomainContainer = domainMap.getOrElse( domId, throw new Exception(s" %JS Can't find domain $domId in job, known domains = [ ${domainMap.keys.mkString(", ")} ] "))
+//    val collectionNode: xml.Node = findCollectionNode( colId, collectionsNode ).getOrElse(throw new Exception(s" %JS Can't find collection $colId in Job, cols(${getNumCollections(collectionsNode)}) = [${getChildIds(collectionsNode).mkString(",")}], parent = \n${Util.sample(collectionsNode)}"))
+//    val variableNode: xml.Node = findVariableNode( varId, collectionNode ).getOrElse(throw new Exception(s" %JS Can't find variable $varId in Collection $colId, childIds = [${getChildIds(collectionsNode).mkString(",")}]"))
+//    val dims = getNodeAttribute( variableNode,"dims").getOrElse(throw new Exception(s" %JS Can't find dims attr in variable '$varId' node in Collection $colId"))
+//    val shape = getNodeAttribute( variableNode,"shape").getOrElse(throw new Exception(s" %JS Can't find shape attr in variable '$varId' node in Collection $colId" ))
+//    val resolutions = new CollectionResolution(getNodeAttribute(variableNode, "resolution").getOrElse(throw new Exception(s" %JS Can't find resolution for collection ${colId}")))
+//    val sizes: Seq[Int] = for( axis <- domain.axes; resolution = resolutions.getResolution(axis.getCFAxisName).getOrElse(throw new Exception(s" %JS Can't find resolution for axis ${axis.getCFAxisName} in collection ${domId}")  ) ) yield {
+//      axis.system match {
+//        case "indices" => axis.end.toInt - axis.start.toInt
+//        case "values" => ( (axis.end.toDouble - axis.start.toDouble ) / resolution ).toInt
+//        case "timestamps" =>
+//          val t0 = new DateTime(axis.start.toString).getMillis
+//          val t1 = new DateTime(axis.end.toString).getMillis
+//          ( ( t1 - t0 ) / resolution ).toInt
+//      }
+//    }
+//    sizes.product
+//  }}
+//
+//  def getSize(): Long = inputSizes.sum()
+//
+//
+//  def findCollectionNode( colId: String, collectionsNode: xml.Node ): Option[xml.Node] = {
+//    collectionsNode.child.find(node => getNodeAttribute(node,"id").fold(false)(_.equalsIgnoreCase(colId)))
+//  }
+//
+//  def getChildIds(parentNode: xml.Node ): Seq[String] = parentNode.child.flatMap( node => getNodeAttribute(node,"id") )
+//
+//  def getNumCollections(collectionsNode: xml.Node ): Int = collectionsNode.child.length
+//
+//  def findVariableNode( varId: String, collectionNode: xml.Node ): Option[xml.Node] = {
+//    for( agg_node <- collectionNode.nonEmptyChildren ) {
+//      val optVarNode = agg_node.child.find(getNodeAttribute(_,"name").fold(false)(_.equalsIgnoreCase(varId)))
+//      if( optVarNode.isDefined) { return optVarNode }
+//    }
+//    None
+//  }
+//
+//  def getNodeAttribute( node: xml.Node, attrId: String ): Option[String] = {
+//    node.attribute( attrId ).flatMap( _.find( _.nonEmpty ).map( _.text ) )
+//  }
+//}
+//
 
 
 object StatusValue extends Enumeration { val QUEUED, EXECUTING, COMPLETED, ERROR, UNDEFINED = Value }
@@ -187,7 +190,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
             val runargs = Map("storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "responseform" -> responseForm )
             val jobId: String = runargs.getOrElse("jobId", RandomStringUtils.random(8, true, true))
             logger.info(s"Received WPS Request: Creating Job, jobId=${jobId}, identifier=${identifier}, runargs={${runargs.mkString(";")}}, datainputs=${datainputs}")
-            val job = new WPSJob(jobId, identifier, datainputs, runargs, collections, 1.0f)
+            val job = Job(jobId, identifier, datainputs, runargs, 1.0f)
             serverRequestManager.addJob(job)
             val result = createResponse(jobId)
             //         BadRequest(response).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
@@ -299,6 +302,7 @@ class ServerRequestManager extends Thread with Loggable {
   protected var processManager: Option[GenericProcessManager] = None
 
   def findQueue( jobSize: Long ): Option[JobQueue] = jobQueues.find( jobSize < _.threshold )
+  def getQueue(  ): JobQueue = jobQueues.head
   def maxJobSize: Long = jobQueues.last.threshold
 
   def term() = {
@@ -322,24 +326,31 @@ class ServerRequestManager extends Thread with Loggable {
 
   def deactivate(): Unit = { active = false; }
 
-  def addJob( job: WPSJob ): Unit = {
-    val jobSize = getJobSize(job)
-    findQueue( jobSize ) match {
-      case Some(queue) =>
-        jobDirectory += ( job.requestId -> WPSJobStatus( job, queue.name ) )
-        queue += job.requestId
-        logger.info( s"EDASW:Added job ${job.requestId} to job queue, nJobs = ${queue.size}"  )
-      case None =>
-        throw new Exception( s"Job request is too large: $jobSize, max job size = $maxJobSize" )
-    }
+  def addJob( job: Job ): Unit = {
+    val queue = getQueue()
+    jobDirectory += ( job.requestId -> WPSJobStatus( job, queue.name ) )
+    queue += job.requestId
+    logger.info( s"EDASW:Added job ${job.requestId} to job queue, nJobs = ${queue.size}"  )
   }
+
+//  def addJobWithSize( job: WPSJobWithSizes ): Unit = {
+//    val jobSize = getJobSize(job)
+//    findQueue( jobSize ) match {
+//      case Some(queue) =>
+//        jobDirectory += ( job.requestId -> WPSJobStatus( job, queue.name ) )
+//        queue += job.requestId
+//        logger.info( s"EDASW:Added job ${job.requestId} to job queue, nJobs = ${queue.size}"  )
+//      case None =>
+//        throw new Exception( s"Job request is too large: $jobSize, max job size = $maxJobSize" )
+//    }
+//  }
 
   def resetJobQueues( ): Unit = {
     jobDirectory.clear()
     jobQueues.foreach( _.clear )
   }
 
-  def getJobSize( job: WPSJob ): Long = job.inputSizes.sum
+//  def getJobSize( job: WPSJobWithSizes ): Long = job.inputSizes.sum
 
   def initialize(): Unit = {
     setDaemon(true)
@@ -446,10 +457,9 @@ class ServerRequestManager extends Thread with Loggable {
   override def run() {
     logger.info( "EDASW: Starting webProcessManager with server_address = " + server_address + ", EDAS libs logging to: " + EDASLogManager.getCurrentLogger.logFilePath.toString )
     processManager = Some( if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) } )
+    val jobQueue = jobQueues.head
     try {
       while ( active ) {
-        jobQueues.foreach( jobQueue => if( ! jobQueue.currentJob.fold(false)(jobExecuting) ) {
-//          logger.info("EDASW::Polling job queue: " + jobQueue.toString)
           jobQueue.popJob( 1 ) match {
             case Some(jobId) =>
               logger.info("EDASW::Popped job for exec: " + jobId)
@@ -457,12 +467,33 @@ class ServerRequestManager extends Thread with Loggable {
             case None =>
               // logger.info(s"EDASW:: Looking for jobs in queue, nJobs = ${jobQueue.size}")
           }
+        }
+    } catch {
+      case exc: InterruptedException => return
+    }
+  }
+
+  def runSerially() {
+    logger.info( "EDASW: Starting webProcessManager with server_address = " + server_address + ", EDAS libs logging to: " + EDASLogManager.getCurrentLogger.logFilePath.toString )
+    processManager = Some( if( server_address.isEmpty ) { new ProcessManager(config) } else { new zmqProcessManager(config) } )
+    try {
+      while ( active ) {
+        jobQueues.foreach( jobQueue => if( ! jobQueue.currentJob.fold(false)(jobExecuting) ) {
+          //          logger.info("EDASW::Polling job queue: " + jobQueue.toString)
+          jobQueue.popJob( 1 ) match {
+            case Some(jobId) =>
+              logger.info("EDASW::Popped job for exec: " + jobId)
+              val result = submitJob(processManager.get, jobId)
+            case None =>
+            // logger.info(s"EDASW:: Looking for jobs in queue, nJobs = ${jobQueue.size}")
+          }
         })
       }
     } catch {
       case exc: InterruptedException => return
     }
   }
+
 
   def submitJob( processMgr: GenericProcessManager, jobId: String ): xml.Node = try {
     val t0 = System.nanoTime()
@@ -474,7 +505,6 @@ class ServerRequestManager extends Thread with Loggable {
         jobCompleted( jobId, processMgr.describeProcess( "cds2", job.identifier, job.runargs ), true )
       case _ =>
         logger.info (s"\n\nEDASW::Popped job identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
-        val parsed_data_inputs = wpsObjectParser.parseDataInputs (job.datainputs)
         logger.info (s"EDASW::Executing Process, job identifier=${job.identifier}, job requestId=${job.requestId}, jobId=${jobId}")
         val (responseId, responseElem ) = processMgr.executeProcess( "cds2", job )
         logger.info ("EDASW::Submitted request '%s' in %.4f sec".format (job.identifier, (System.nanoTime () - t0) / 1.0E9) )
