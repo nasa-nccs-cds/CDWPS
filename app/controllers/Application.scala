@@ -230,21 +230,21 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
     }
   }
 
-//  def getResultFile(id: String, service: String) = Action {
-//    try {
-//      serverRequestManager.getResultFilePath(service, id) match {
-//        case Some(resultFilePath: String) =>
-//          logger.info(s"WPS getResult: resultFilePath=$resultFilePath")
-//          Ok.sendFile(new File(resultFilePath)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-//        case None =>
-//          NotFound("Result not yet available").withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-//      }
-//    } catch {
-//      case e: Exception =>
-//        InternalServerError(e.getMessage)
-//          .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
-//    }
-//  }
+  def getResultFile(id: String, service: String) = Action {
+    try {
+      serverRequestManager.getResultFilePath(service, id) match {
+        case Some(resultFilePath: String) =>
+          logger.info(s"WPS getResult: resultFilePath=$resultFilePath")
+          Ok.sendFile(new File(resultFilePath)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+        case None =>
+          NotFound("Result not yet available").withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+      }
+    } catch {
+      case e: Exception =>
+        InternalServerError(e.getMessage)
+          .withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+    }
+  }
 
   def getResult(id: String, service: String) = Action {
     try {
@@ -286,6 +286,15 @@ case class CollectionResolution( spec: String ) {
 
 }
 
+case class ServerRequestExecutionCallback( server: ServerRequestManager, jobId: String ) extends ExecutionCallback with Loggable {
+  def success( results: xml.Node  ) = {
+    server.updateJobStatus( jobId, StatusValue.COMPLETED, results.toString() )
+  }
+  def failure( msg: String ) = {
+    server.updateJobStatus( jobId, StatusValue.ERROR, msg )
+  }
+}
+
 class ServerRequestManager extends Thread with Loggable {
   val config: Map[String, String] = serverConfiguration
   val jobQueues: Seq[JobQueue] = JobQueues.create(config)
@@ -306,14 +315,14 @@ class ServerRequestManager extends Thread with Loggable {
   def maxJobSize: Long = jobQueues.last.threshold
 
   def term() = {
-    active = false;
+    active = false
     processManager.map( _.term() )
   }
 
-//  def getResultFilePath( service: String, resultId: String ): Option[String] = processManager match {
-//    case Some( procMgr ) => procMgr.getResultFilePath( service, resultId )
-//    case None => throw new Exception( "Attempt to access undefined ProcessManager")
-//  }
+  def getResultFilePath( service: String, resultId: String ): Option[String] = processManager match {
+    case Some( procMgr ) => procMgr.getResultFilePath( service, resultId )
+    case None => throw new Exception( "Attempt to access undefined ProcessManager")
+  }
 
   def getResult( service: String, resultId: String, response_syntax: ResponseSyntax.Value ): xml.Node= processManager match {
     case Some( procMgr ) => procMgr.getResult( service, resultId, response_syntax )
@@ -506,7 +515,8 @@ class ServerRequestManager extends Thread with Loggable {
       case _ =>
         logger.info (s"\n\nEDASW::Popped job identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
         logger.info (s"EDASW::Executing Process, job identifier=${job.identifier}, job requestId=${job.requestId}, jobId=${jobId}")
-        val (responseId, responseElem ) = processMgr.executeProcess( "cds2", job )
+        val execCallback = ServerRequestExecutionCallback( this, job.requestId )
+        val (responseId, responseElem ) = processMgr.executeProcess( "cds2", job, Some(execCallback) )
         logger.info ("EDASW::Submitted request '%s' in %.4f sec".format (job.identifier, (System.nanoTime () - t0) / 1.0E9) )
         responseElem
     }
