@@ -288,9 +288,11 @@ case class CollectionResolution( spec: String ) {
 
 case class ServerRequestExecutionCallback( server: ServerRequestManager, jobId: String ) extends ExecutionCallback with Loggable {
   def success( results: xml.Node  ) = {
+    logger.info (s"EDASW: ServerRequestExecutionCallback: SUCCESS" )
     server.updateJobStatus( jobId, StatusValue.COMPLETED, results.toString() )
   }
   def failure( msg: String ) = {
+    logger.info (s"EDASW: ServerRequestExecutionCallback: FAILURE" )
     server.updateJobStatus( jobId, StatusValue.ERROR, msg )
   }
 }

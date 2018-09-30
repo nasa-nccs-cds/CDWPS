@@ -8,6 +8,6 @@ GET     /cwt                     controllers.WPS.execute( request: String, ident
 GET     /count                   demo.HelloController.count
 
 
-# GET     /cwt/file                controllers.WPS.getResultFile( id: String, service: String ?= "cds2" )
-# GET     /cwt/result              controllers.WPS.getResult( id: String, service: String ?= "cds2" )
+GET     /cwt/file                controllers.WPS.getResultFile( id: String, service: String ?= "cds2" )
+GET     /cwt/result              controllers.WPS.getResult( id: String, service: String ?= "cds2" )
 
