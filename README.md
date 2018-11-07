@@ -41,7 +41,7 @@ _WPS implementation built on scala/play, designed to interface to big data frame
         
     4) Run the application standalone:
     
-        >> sbt war
+        >> sbt run
 
      5) EDAS Python Client:
 
