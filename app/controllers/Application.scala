@@ -472,7 +472,7 @@ class ServerRequestManager extends Thread with Loggable {
             }
         }
       case None =>
-        val msg = s"Job ${requestId} has been killed by system administration"
+        val msg = s"Job ${requestId} has been killed by system administration.  Current jobs: " + jobDirectory.keys.mkString(" ")
         new WPSExecuteStatusError( "WPS", "NonExistentJob: " + msg, requestId )
     }
     status.toXml( response_syntax )
