@@ -445,8 +445,10 @@ class ServerRequestManager extends Thread with Loggable {
     logger.info( "EDASW:: checkJobStatus: ")
     if ( processManager.exists( _.hasResult( "cds", requestId ) ) ) {
       val resultOpt = processManager.map( _.getResult( "cds", requestId, ResponseSyntax.WPS) )
-      logger.info( "EDASW:: RESULT: " + resultOpt.map(_.toString()).getOrElse("") )
-      resultOpt.map( r => updateJobStatus( requestId, StatusValue.COMPLETED, "" ) )
+      val result = resultOpt.map(_.toString()).getOrElse("")
+      logger.info( "EDASW:: RESULT: " + result )
+      if( result.contains("Errno") ) { updateJobStatus( requestId, StatusValue.ERROR, result ) }
+      else { resultOpt.map( r => updateJobStatus( requestId, StatusValue.COMPLETED, "" ) ) }
     } else {
       logger.info( "EDASW:: no result..... ")
     }
