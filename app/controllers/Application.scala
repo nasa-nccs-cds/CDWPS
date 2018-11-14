@@ -447,7 +447,7 @@ class ServerRequestManager extends Thread with Loggable {
       val resultOpt = processManager.map( _.getResult( "cds", requestId, ResponseSyntax.WPS) )
       val resultStr = resultOpt.map(_.toString()).getOrElse("")
       logger.info( "EDASW:: RESULT: " + resultStr )
-      val status = if ( resultStr.contains("[ERROR]" ) ) { StatusValue.ERROR } else { StatusValue.COMPLETED }
+      val status = if ( resultStr.contains("[ERROR]" || result.contains("Errno") ) ) { StatusValue.ERROR } else { StatusValue.COMPLETED }
       resultOpt.map(r => updateJobStatus(requestId, status, resultStr ) )
     } else {
       logger.info( "EDASW:: no result..... ")
@@ -474,7 +474,7 @@ class ServerRequestManager extends Thread with Loggable {
             }
         }
       case None =>
-        val msg = s"Job ${requestId} has been killed by system administration"
+        val msg = s"Job ${requestId} has been killed by system administration.  Current jobs: " + jobDirectory.keys.mkString(" ")
         new WPSExecuteStatusError( "WPS", "NonExistentJob: " + msg, requestId )
     }
     status.toXml( response_syntax )
