@@ -169,6 +169,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
       serverRequestManager.resetJobQueues
       createResponse("util.reset")
     } else {
+      serverRequestManager.executeUtilityRequest( request )
       throw new Exception( "Unknown utility request: " + request )
     }
   }
@@ -529,7 +530,7 @@ class ServerRequestManager extends Thread with Loggable {
         jobCompleted( jobId, processMgr.getCapabilities( "cds2", job.identifier, job.runargs ), true )
       case jobId if jobId.startsWith("describeprocess") =>
         jobCompleted( jobId, processMgr.describeProcess( "cds2", job.identifier, job.runargs ), true )
-      case _ =>
+      case _ =>                                                                                                          //   TODO: Add "util" request.
         logger.info (s"\n\nEDASW::Popped job identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
         logger.info (s"EDASW::Executing Process, job identifier=${job.identifier}, job requestId=${job.requestId}, jobId=${jobId}")
  //       val execCallback = ServerRequestExecutionCallback( this, job.requestId )
