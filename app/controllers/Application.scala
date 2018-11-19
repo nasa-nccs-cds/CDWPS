@@ -36,7 +36,6 @@ object Util {
     val str = obj.toString
     str.substring( 0, math.min( maxLen, str.length ) )
   }
-
 }
 
 //class WPSJob(requestId: String, identifier: String, datainputs: String, private val _runargs: Map[String,String], collectionsNode: xml.Node, _priority: Float) extends Job(requestId, identifier, datainputs, _runargs, _priority) {
@@ -148,6 +147,7 @@ case class WPSJobStatus( job: Job, queue: String ) {
 
 class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Loggable {
   val play_app = current;
+  EDASLogManager.isMaster
   val printer = new scala.xml.PrettyPrinter(200, 3)
   logger.info( "\n ------------------------- EDASW: Application STARTUP ----------------------------------- \n" )
   val serverRequestManager = new ServerRequestManager()
