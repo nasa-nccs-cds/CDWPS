@@ -434,6 +434,9 @@ class ServerRequestManager extends Thread with Loggable {
     if( identifier.toLowerCase.startsWith("job") ) { getJobReport }
     else {  executeQuery( new Job( "getcapabilities:" + identifier, identifier, 1.0f ) ) }
 
+  def executeUtilityRequest( request: String ): xml.Node =
+    executeQuery( new Job( "util:" + request, request, 1.0f ) )
+
   def describeProcess( identifier: String ): xml.Node = {
     processesCache.getOrElseUpdate( identifier, executeQuery( new Job( "describeprocess:" + identifier, identifier, 1.0f ) ) )
   }
@@ -530,6 +533,8 @@ class ServerRequestManager extends Thread with Loggable {
         jobCompleted( jobId, processMgr.getCapabilities( "cds2", job.identifier, job.runargs ), true )
       case jobId if jobId.startsWith("describeprocess") =>
         jobCompleted( jobId, processMgr.describeProcess( "cds2", job.identifier, job.runargs ), true )
+      case jobId if jobId.startsWith("util") =>
+        jobCompleted( jobId, processMgr.getCapabilities( "cds2", job.identifier, job.runargs ), true )
       case _ =>                                                                                                          //   TODO: Add "util" request.
         logger.info (s"\n\nEDASW::Popped job identifier=${job.identifier}, datainputs=${job.datainputs}\n\n")
         logger.info (s"EDASW::Executing Process, job identifier=${job.identifier}, job requestId=${job.requestId}, jobId=${jobId}")
