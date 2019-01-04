@@ -151,6 +151,7 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
   val printer = new scala.xml.PrettyPrinter(200, 3)
   logger.info( "\n ------------------------- EDASW: Application STARTUP ----------------------------------- \n" )
   val serverRequestManager = new ServerRequestManager()
+  val enableUtilityRequests = false
   lazy val collections: xml.Node = serverRequestManager.getCapabilities("col")
   serverRequestManager.initialize()
   lifecycle.addStopHook( { () => term() } )
@@ -186,7 +187,11 @@ class WPS @Inject() (lifecycle: ApplicationLifecycle) extends Controller with Lo
         case "execute" =>
           val idToks = identifier.split('.')
           if( idToks(0).equalsIgnoreCase( "util" ) ) {
-            Ok( executeUtilityRequest( idToks.last ) ).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+            if ( enableUtilityRequests ) {
+              Ok(executeUtilityRequest(idToks.last)).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+            } else {
+              NotAcceptable(<error type="UnacceptableRequest"> { "Utility Requests Disabled" } </error>).withHeaders(ACCESS_CONTROL_ALLOW_ORIGIN -> "*")
+            }
           } else {
             val runargs = Map("storeExecuteResponse" -> storeExecuteResponse.toLowerCase, "status" -> status.toLowerCase, "responseform" -> responseForm )
             val jobId: String = runargs.getOrElse("jobId", RandomStringUtils.random(8, true, true))

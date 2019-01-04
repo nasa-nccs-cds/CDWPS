@@ -15,19 +15,19 @@ play.crypto.secret = "changeme"
 play.i18n.langs = [ "en" ]
 
 execution.handler.type="spark.web"
-play.server.http.port=5327
-edas.server.address="10.71.9.11"
-edas.server.port.request=5670
-edas.server.port.response=5671
-edas.cache.dir="/dataportal01/edas/config"
-edas.publish.dir="/dataportal01/edas/cache"
-wps.server.proxy.href="http://localhost:9001/wps"
+play.server.http.port=0000
+edas.server.address="0.0.0.0"
+edas.server.port.request=0000
+edas.server.port.response=0000
+edas.cache.dir="/foo/bar"
+edas.publish.dir="/foo/bar"
+wps.server.proxy.href="http://localhost:0000/wps"
 
 // Use: >> sbt "run 5327"
 
 //play.filters.cors {
 //#  pathPrefixes = ["/some/path", ...]
-//  allowedOrigins = [ "http://128.183.35.38", "http://localhost" ]
+//  allowedOrigins = [ "http://0.0.0.0", "http://localhost" ]
 //  allowedHttpMethods = ["GET", "POST"]
 //  allowedHttpHeaders = ["Accept"]
 //  preflightMaxAge = 3 days
